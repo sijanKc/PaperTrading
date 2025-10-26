@@ -1,0 +1,560 @@
+/* Main Layout */
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.dashboardMain {
+  flex: 1;
+  margin-left: 16rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.tradeContainer {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  margin-top: 80px;
+}
+
+/* Header */
+.header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #3b82f6; /* Professional blue */
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  font-size: 1.1rem;
+  color: #6b7280;
+}
+
+/* Main Grid */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+}
+
+/* Trade Form */
+.tradeForm {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.formTabs {
+  display: flex;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 1rem;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buyTab {
+  color: #059669; /* Green for buy */
+}
+
+.sellTab {
+  color: #dc2626; /* Red for sell */
+}
+
+.tabActive.buyTab {
+  background: #10b981; /* Emerald green */
+  color: white;
+}
+
+.tabActive.sellTab {
+  background: #ef4444; /* Red */
+  color: white;
+}
+
+.formContent {
+  padding: 1.5rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.formInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Order Summary */
+.orderSummary {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+  border: 1px solid #e5e7eb;
+}
+
+.orderSummary h4 {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.summaryRow:last-child {
+  border-bottom: none;
+}
+
+.buyText {
+  color: #059669; /* Green */
+  font-weight: 600;
+}
+
+.sellText {
+  color: #dc2626; /* Red */
+  font-weight: 600;
+}
+
+.totalAmount {
+  font-weight: 700;
+  color: #3b82f6; /* Blue */
+  font-size: 1.1rem;
+}
+
+/* Execute Button */
+.executeButton {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.buyButton {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.buyButton:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.sellButton {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.sellButton:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Market Overview */
+.marketOverview {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.marketOverview h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.marketGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stockCard {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.stockCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.stockInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.stockSymbol {
+  font-weight: 700;
+  color: #3b82f6; /* Blue */
+  font-size: 1rem;
+  margin-bottom: 0.1rem;
+}
+
+.stockName {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.priceChange {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.positive {
+  color: #059669; /* Green */
+}
+
+.negative {
+  color: #dc2626; /* Red */
+}
+
+.stockPrice {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.changePercent {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Portfolio Overview */
+.portfolioOverview {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+}
+
+.portfolioOverview h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.portfolioGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.holdingCard {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.holdingCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.holdingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.shares {
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+}
+
+.plIndicator {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.holdingDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.detailRow span:first-child {
+  color: #6b7280;
+}
+
+.detailRow span:last-child {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.holdingActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.quickBuy, .quickSell {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quickBuy {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.quickBuy:hover {
+  background: #bbf7d0;
+}
+
+.quickSell {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+.quickSell:hover {
+  background: #fca5a5;
+}
+
+/* Recent Activity */
+.recentActivity {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+}
+
+.recentActivity h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.activityType {
+  min-width: 60px;
+}
+
+.buyBadge, .sellBadge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.buyBadge {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.sellBadge {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+.activityDetails {
+  flex: 1;
+}
+
+.activityStock {
+  font-weight: 600;
+  color: #1e40af; /* Blue */
+  margin-bottom: 0.2rem;
+}
+
+.activityInfo {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.activityTime {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.activityStatus {
+  min-width: 80px;
+  text-align: right;
+}
+
+.completedStatus {
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dashboardMain {
+    margin-left: 4rem;
+  }
+  
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardMain {
+    margin-left: 0;
+  }
+
+  .tradeContainer {
+    padding: 1rem;
+    margin-top: 70px;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .holdingHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .activityItem {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .activityStatus {
+    text-align: center;
+  }
+}
+
+/* Dark Theme */
+[data-bs-theme="dark"] .dashboardContainer {
+  background-color: #111827;
+}
+
+[data-bs-theme="dark"] .tradeForm,
+[data-bs-theme="dark"] .marketOverview,
+[data-bs-theme="dark"] .portfolioOverview,
+[data-bs-theme="dark"] .recentActivity {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .header h1 {
+  color: #60a5fa;
+}
+
+[data-bs-theme="dark"] .formInput {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .stockCard,
+[data-bs-theme="dark"] .holdingCard,
+[data-bs-theme="dark"] .activityItem {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+[data-bs-theme="dark"] .orderSummary {
+  background: #374151;
+  border-color: #4b5563;
+}

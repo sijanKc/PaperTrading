@@ -1,0 +1,810 @@
+.paperStatsWrapper {
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.paperStatsWrapper.sidebarCollapsed {
+  width: calc(100vw - 70px);
+  margin-left: 70px;
+}
+
+.paperStatsWrapper.sidebarOpen {
+  width: calc(100vw - 280px);
+  margin-left: 280px;
+}
+
+/* Stats Card */
+.paperStatsCard {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+[data-bs-theme="dark"] .paperStatsCard {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+}
+
+/* Header */
+.statsHeader {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: none;
+  padding: 1.25rem 1.5rem;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cardTitle {
+  color: white;
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerIcon {
+  font-size: 1.4rem;
+}
+
+.demoBadge {
+  font-size: 0.7rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* Timeframe Selector */
+.timeframeSelector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.selectorLabel {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.timeframeButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.timeframeBtn {
+  font-weight: 600;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.timeframeBtn:hover {
+  transform: translateY(-1px);
+}
+
+/* Stats Body */
+.statsBody {
+  padding: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+[data-bs-theme="dark"] .sectionTitle {
+  color: #d1d5db;
+}
+
+/* Performance Overview */
+.performanceOverview {
+  margin-bottom: 2rem;
+}
+
+.overviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.timeframeLabel {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  background: #f1f5f9;
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+}
+
+[data-bs-theme="dark"] .timeframeLabel {
+  background: #374151;
+  color: #94a3b8;
+}
+
+/* Performance Metric */
+.performanceMetric {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  height: 100%;
+  cursor: pointer;
+}
+
+[data-bs-theme="dark"] .performanceMetric {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+
+.performanceMetric:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.metricHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.metricTitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+[data-bs-theme="dark"] .metricTitle {
+  color: #94a3b8;
+}
+
+.metricBadge {
+  font-size: 0.7rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+}
+
+.metricValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+[data-bs-theme="dark"] .metricValue {
+  color: #f1f5f9;
+}
+
+.metricValue.success {
+  color: #10b981;
+}
+
+.metricValue.danger {
+  color: #ef4444;
+}
+
+.metricSubtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .metricSubtitle {
+  color: #64748b;
+}
+
+/* Balance Metric */
+.balanceMetric {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  height: 100%;
+}
+
+[data-bs-theme="dark"] .balanceMetric {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+
+.progressSection {
+  margin-top: 0.75rem;
+}
+
+.growthProgress {
+  height: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.growthProgress .progressBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Trading Statistics */
+.tradingStatistics {
+  margin-bottom: 2rem;
+}
+
+.tradingMetric {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+[data-bs-theme="dark"] .tradingMetric {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+
+.tradingMetric:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.metricIcon {
+  font-size: 2rem;
+  opacity: 0.8;
+}
+
+.metricContent {
+  flex: 1;
+}
+
+.metricContent .metricTitle {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+[data-bs-theme="dark"] .metricContent .metricTitle {
+  color: #94a3b8;
+}
+
+.metricContent .metricValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.metricContent .metricValue.primary { color: #3b82f6; }
+.metricContent .metricValue.success { color: #10b981; }
+.metricContent .metricValue.warning { color: #f59e0b; }
+.metricContent .metricValue.info { color: #06b6d4; }
+
+.metricContent .metricSubtitle {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Trade Extremes */
+.tradeExtreme {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+[data-bs-theme="dark"] .tradeExtreme {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+
+.tradeExtreme:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.bestTrade {
+  border-left: 4px solid #10b981;
+}
+
+.worstTrade {
+  border-left: 4px solid #ef4444;
+}
+
+.extremeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.extremeTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+[data-bs-theme="dark"] .extremeTitle {
+  color: #d1d5db;
+}
+
+.extremeBadge {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.extremeSubtitle {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+[data-bs-theme="dark"] .extremeSubtitle {
+  color: #94a3b8;
+}
+
+/* Risk Metrics */
+.riskMetrics {
+  margin-bottom: 2rem;
+}
+
+.riskMetric {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  height: 100%;
+  cursor: pointer;
+}
+
+[data-bs-theme="dark"] .riskMetric {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+
+.riskMetric:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.riskHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.riskTitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+[data-bs-theme="dark"] .riskTitle {
+  color: #94a3b8;
+}
+
+.riskBadge {
+  font-size: 0.7rem;
+  padding: 0.3rem 0.5rem;
+}
+
+.riskValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+[data-bs-theme="dark"] .riskValue {
+  color: #f1f5f9;
+}
+
+.riskProgress {
+  height: 6px;
+  border-radius: 3px;
+  background-color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .riskProgress {
+  background-color: #374151;
+}
+
+.riskProgress .progressBar {
+  border-radius: 3px;
+}
+
+/* Performance History */
+.performanceHistory {
+  margin-bottom: 2rem;
+}
+
+.historyChart {
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+  height: 120px;
+  padding: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+[data-bs-theme="dark"] .historyChart {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+
+.historyBar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.barContainer {
+  height: 80px;
+  width: 100%;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+}
+
+.barFill {
+  width: 20px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+  min-height: 4px;
+}
+
+.barFill.positive {
+  background: linear-gradient(to top, #10b981, #34d399);
+}
+
+.barFill.negative {
+  background: linear-gradient(to top, #ef4444, #f87171);
+}
+
+.barLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.barPeriod {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+[data-bs-theme="dark"] .barPeriod {
+  color: #94a3b8;
+}
+
+.barReturn {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.barReturn.positive {
+  color: #10b981;
+}
+
+.barReturn.negative {
+  color: #ef4444;
+}
+
+/* Sector Allocation */
+.sectorAllocation {
+  margin-bottom: 1rem;
+}
+
+.allocationBars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+[data-bs-theme="dark"] .allocationBars {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+
+.allocationItem {
+  margin-bottom: 0.5rem;
+}
+
+.allocationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.sectorName {
+  font-size: 0.8rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+[data-bs-theme="dark"] .sectorName {
+  color: #d1d5db;
+}
+
+.sectorPercent {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+[data-bs-theme="dark"] .sectorPercent {
+  color: #f1f5f9;
+}
+
+.allocationProgress {
+  height: 8px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+[data-bs-theme="dark"] .allocationProgress {
+  background: #374151;
+}
+
+.allocationProgress .progressBar {
+  border-radius: 4px;
+}
+
+/* Footer */
+.statsFooter {
+  background: #f8fafc;
+  border: none;
+  padding: 1rem 1.5rem;
+}
+
+[data-bs-theme="dark"] .statsFooter {
+  background: #1e293b;
+}
+
+.footerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footerStats {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.footerStats .stat {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+[data-bs-theme="dark"] .footerStats .stat {
+  color: #94a3b8;
+}
+
+.footerStats .stat strong {
+  color: #374151;
+}
+
+[data-bs-theme="dark"] .footerStats .stat strong {
+  color: #d1d5db;
+}
+
+/* Loading States */
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #f59e0b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+[data-bs-theme="dark"] .loadingSpinner {
+  border: 3px solid #374151;
+  border-top: 3px solid #f59e0b;
+}
+
+.noStats {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .paperStatsWrapper.sidebarOpen,
+  .paperStatsWrapper.sidebarCollapsed {
+    width: 100vw !important;
+    margin-left: 0 !important;
+    margin-top: 10px;
+    padding: 0 10px;
+  }
+
+  .headerContent {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timeframeSelector {
+    justify-content: center;
+  }
+
+  .timeframeButtons {
+    justify-content: center;
+  }
+
+  .overviewHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .historyChart {
+    gap: 0.5rem;
+    height: 100px;
+    padding: 0.75rem;
+  }
+
+  .barContainer {
+    height: 60px;
+  }
+
+  .footerContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .footerStats {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .metricHeader,
+  .riskHeader,
+  .extremeHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .metricBadge,
+  .riskBadge,
+  .extremeBadge {
+    align-self: flex-start;
+  }
+
+  .tradingMetric {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .metricIcon {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsBody {
+    padding: 1rem;
+  }
+
+  .performanceMetric,
+  .tradingMetric,
+  .riskMetric,
+  .tradeExtreme {
+    padding: 1rem;
+  }
+
+  .metricValue {
+    font-size: 1.25rem;
+  }
+
+  .historyChart {
+    gap: 0.25rem;
+    height: 80px;
+  }
+
+  .barFill {
+    width: 15px;
+  }
+
+  .barPeriod,
+  .barReturn {
+    font-size: 0.6rem;
+  }
+
+  .footerStats {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+}
+
+/* Utility Classes */
+.textCenter {
+  text-align: center;
+}
+
+.textMuted {
+  color: #6c757d !important;
+}
+
+[data-bs-theme="dark"] .textMuted {
+  color: #94a3b8 !important;
+}
+
+.mt2 {
+  margin-top: 0.5rem;
+}
+
+/* Ensure proper spacing for all components */
+.g3 {
+  gap: 1rem;
+}
+
+/* Fix for progress bar labels on small screens */
+@media (max-width: 576px) {
+  .growthProgress .progressBar {
+    font-size: 0.6rem;
+    padding: 0 0.25rem;
+  }
+}

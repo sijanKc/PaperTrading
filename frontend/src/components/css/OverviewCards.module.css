@@ -1,0 +1,331 @@
+/* Overview Cards Wrapper - Same as Header behavior */
+.overviewCardsWrapper {
+  transition: all 0.3s ease;
+  margin-top: 70px; /* Header height */
+  padding: 1rem;
+}
+
+/* When sidebar is COLLAPSED - Full width */
+.sidebarCollapsed {
+  width: calc(100vw - 70px);
+  margin-left: 70px;
+}
+
+/* When sidebar is OPEN - Adjusted width */
+.sidebarOpen {
+  width: calc(100vw - 280px);
+  margin-left: 280px;
+}
+
+.overviewCardsContainer {
+  padding: 0.5rem 0;
+}
+
+.overviewCard {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  height: 100%;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  position: relative;
+}
+
+.overviewCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.overviewCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.overviewCard:hover::before {
+  opacity: 1;
+}
+
+/* Card Color Variants */
+.cardPrimary { 
+  border-left: 4px solid #3b82f6; 
+}
+
+.cardSuccess { 
+  border-left: 4px solid #10b981; 
+}
+
+.cardDanger { 
+  border-left: 4px solid #ef4444; 
+}
+
+.cardWarning { 
+  border-left: 4px solid #f59e0b; 
+}
+
+.cardInfo { 
+  border-left: 4px solid #06b6d4; 
+}
+
+/* Trend-based background gradients */
+.trendUp { 
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%) !important; 
+}
+
+.trendDown { 
+  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%) !important; 
+}
+
+.trendNeutral { 
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; 
+}
+
+/* Dark theme support */
+.darkTheme .overviewCardsWrapper {
+  background: #0f172a;
+}
+
+.darkTheme .overviewCard {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  color: #e2e8f0;
+}
+
+.darkTheme .trendUp { 
+  background: linear-gradient(135deg, #1e293b 0%, #064e3b 100%) !important; 
+}
+
+.darkTheme .trendDown { 
+  background: linear-gradient(135deg, #1e293b 0%, #7f1d1d 100%) !important; 
+}
+
+.darkTheme .trendNeutral { 
+  background: linear-gradient(135deg, #1e293b 0%, #1e293b 100%) !important; 
+}
+
+/* Card Header */
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.cardIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.cardPrimary .cardIcon { 
+  background: linear-gradient(135deg, #3b82f6, #6366f1); 
+}
+
+.cardSuccess .cardIcon { 
+  background: linear-gradient(135deg, #10b981, #059669); 
+}
+
+.cardDanger .cardIcon { 
+  background: linear-gradient(135deg, #ef4444, #dc2626); 
+}
+
+.cardWarning .cardIcon { 
+  background: linear-gradient(135deg, #f59e0b, #d97706); 
+}
+
+.cardInfo .cardIcon { 
+  background: linear-gradient(135deg, #06b6d4, #0891b2); 
+}
+
+.cardIcon .icon {
+  font-size: 1.5rem;
+}
+
+.cardTitles {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.darkTheme .cardTitle {
+  color: #94a3b8;
+}
+
+.cardSubtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.darkTheme .cardSubtitle {
+  color: #64748b;
+}
+
+.percentageBadge {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Card Content */
+.cardContent {
+  margin-bottom: 1rem;
+}
+
+.cardValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+.darkTheme .cardValue {
+  color: #f1f5f9;
+}
+
+.cardTrend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trendIcon {
+  font-size: 0.9rem;
+}
+
+.trendText {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.darkTheme .trendText {
+  color: #94a3b8;
+}
+
+/* Card Footer */
+.cardFooter {
+  padding-top: 0.5rem;
+}
+
+.progressContainer {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.darkTheme .progressContainer {
+  background: #334155;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progressBar.up {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.progressBar.down {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.progressBar.neutral {
+  background: linear-gradient(90deg, #6b7280, #9ca3af);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .cardValue {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile ma full width */
+  .sidebarOpen,
+  .sidebarCollapsed {
+    width: 100vw !important;
+    margin-left: 0 !important;
+    padding: 0.5rem;
+  }
+  
+  .overviewCardsContainer {
+    padding: 0.25rem 0;
+  }
+  
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .cardIcon {
+    margin-right: 0;
+  }
+  
+  .percentageBadge {
+    align-self: flex-start;
+    margin-left: 0;
+  }
+  
+  .cardValue {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .cardValue {
+    font-size: 1.3rem;
+  }
+  
+  .cardIcon {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .cardIcon .icon {
+    font-size: 1.3rem;
+  }
+}
+
+/* Animation for value changes */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.valueUpdate {
+  animation: pulse 0.6s ease;
+}

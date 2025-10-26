@@ -1,0 +1,365 @@
+/* Sidebar Base Styles */
+.sidebar {
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Theme */
+[data-bs-theme="dark"] .sidebar {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  color: white;
+  border-right: 1px solid #334155;
+}
+
+/* White Theme */
+[data-bs-theme="light"] .sidebar {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #1f2937;
+  border-right: 1px solid #e5e7eb;
+}
+
+.sidebarOpen {
+  width: 280px;
+}
+
+.sidebarCollapsed {
+  width: 70px;
+}
+
+/* Scrollable Content Area */
+.sidebarContent {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem 0;
+}
+
+.sidebarContent::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebarContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-bs-theme="dark"] .sidebarContent::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 2px;
+}
+
+[data-bs-theme="light"] .sidebarContent::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+/* Header */
+.sidebarHeader {
+  padding: 1.5rem 1rem 1rem;
+  border-bottom: 1px solid;
+}
+
+[data-bs-theme="dark"] .sidebarHeader {
+  border-color: #334155;
+}
+
+[data-bs-theme="light"] .sidebarHeader {
+  border-color: #e5e7eb;
+}
+
+.sidebarBrand h4 {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+[data-bs-theme="dark"] .sidebarBrand h4 {
+  color: #60a5fa;
+}
+
+[data-bs-theme="light"] .sidebarBrand h4 {
+  color: #3b82f6;
+}
+
+.brandSubtitle {
+  font-size: 0.8rem;
+}
+
+[data-bs-theme="dark"] .brandSubtitle {
+  color: #94a3b8;
+}
+
+[data-bs-theme="light"] .brandSubtitle {
+  color: #6b7280;
+}
+
+.sidebarToggle {
+  color: #94a3b8 !important;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0.25rem !important;
+}
+
+.sidebarToggle:hover {
+  background: rgba(96, 165, 250, 0.1) !important;
+}
+
+[data-bs-theme="dark"] .sidebarToggle:hover {
+  color: #60a5fa !important;
+}
+
+[data-bs-theme="light"] .sidebarToggle:hover {
+  color: #3b82f6 !important;
+}
+
+/* Practice Banner */
+.practiceBanner {
+  margin: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+[data-bs-theme="dark"] .practiceBanner {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-color: #60a5fa;
+}
+
+[data-bs-theme="light"] .practiceBanner {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  border-color: #3b82f6;
+  color: white;
+}
+
+.practiceIcon {
+  font-size: 1.5rem;
+}
+
+.practiceTitle {
+  font-weight: bold;
+}
+
+.practiceSubtitle {
+  opacity: 0.9;
+}
+
+/* Navigation */
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 0.5rem;
+}
+
+.sidebarNavLink {
+  text-decoration: none !important;
+  margin: 0.25rem 0.5rem;
+  padding: 0.75rem 1rem !important;
+  border-radius: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+  border: none !important;
+}
+
+[data-bs-theme="dark"] .sidebarNavLink {
+  color: #cbd5e1 !important;
+  background: transparent !important;
+}
+
+[data-bs-theme="light"] .sidebarNavLink {
+  color: #6b7280 !important;
+  background: transparent !important;
+}
+
+.sidebarNavLink:hover {
+  transform: translateX(2px);
+}
+
+[data-bs-theme="dark"] .sidebarNavLink:hover {
+  color: white !important;
+  background: rgba(96, 165, 250, 0.1) !important;
+}
+
+[data-bs-theme="light"] .sidebarNavLink:hover {
+  color: #1f2937 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.sidebarNavLink.active {
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+[data-bs-theme="dark"] .sidebarNavLink.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+}
+
+[data-bs-theme="light"] .sidebarNavLink.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+}
+
+.navLinkContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navIcon {
+  font-size: 1.25rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.navLabel {
+  font-weight: 500;
+  flex: 1;
+}
+
+.navBadge {
+  font-size: 0.65rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.activeIndicator {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+[data-bs-theme="dark"] .activeIndicator {
+  background: #60a5fa;
+}
+
+[data-bs-theme="light"] .activeIndicator {
+  background: #3b82f6;
+}
+
+/* Quick Actions */
+.sidebarActions {
+  padding: 1rem;
+  border-top: 1px solid;
+}
+
+[data-bs-theme="dark"] .sidebarActions {
+  border-color: #334155;
+}
+
+[data-bs-theme="light"] .sidebarActions {
+  border-color: #e5e7eb;
+}
+
+.sidebarSectionTitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+[data-bs-theme="dark"] .sidebarSectionTitle {
+  color: #94a3b8;
+}
+
+[data-bs-theme="light"] .sidebarSectionTitle {
+  color: #6b7280;
+}
+
+.resetBtn {
+  border-color: #f59e0b !important;
+  color: #f59e0b !important;
+}
+
+.resetBtn:hover {
+  background: #f59e0b !important;
+  color: white !important;
+}
+
+/* Footer */
+.sidebarFooter {
+  padding: 1rem;
+  border-top: 1px solid;
+}
+
+[data-bs-theme="dark"] .sidebarFooter {
+  border-color: #334155;
+}
+
+[data-bs-theme="light"] .sidebarFooter {
+  border-color: #e5e7eb;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.userAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+[data-bs-theme="dark"] .userAvatar {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+[data-bs-theme="light"] .userAvatar {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: white;
+}
+
+.userName {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.userStatus {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+[data-bs-theme="dark"] .userStatus {
+  color: #94a3b8;
+}
+
+[data-bs-theme="light"] .userStatus {
+  color: #6b7280;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.statusDot.online {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebarOpen {
+    width: 100%;
+  }
+  
+  .sidebarCollapsed {
+    width: 60px;
+  }
+}

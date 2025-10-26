@@ -1,0 +1,799 @@
+/* Main Layout */
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.dashboardMain {
+  flex: 1;
+  margin-left: 16rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.helpContainer {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  margin-top: 80px;
+}
+
+/* Header */
+.header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  font-size: 1.1rem;
+  color: #6b7280;
+}
+
+/* Quick Help Cards */
+.quickHelp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.helpCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.helpCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.helpIcon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.helpCard h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3b82f6; 
+  margin-bottom: 0.5rem;
+}
+
+.helpCard p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Tabs */
+.tabsContainer {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.tabsNav {
+  display: flex;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tabButton {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tabButton:hover {
+  color: #374151;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.tabActive {
+  color: #3b82f6 !important;
+  border-bottom-color: #3b82f6 !important;
+  background: white;
+}
+
+.tabContent {
+  padding: 1.5rem;
+}
+
+/* Section Headers */
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sectionHeader h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.sectionSubtitle {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* FAQ Section */
+.searchBox {
+  min-width: 300px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.faqCategories {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.faqCategory {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.categoryIcon {
+  font-size: 1.5rem;
+}
+
+.categoryName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3b82f6; 
+  margin: 0;
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.faqItem {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.faqQuestion {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.faqQuestion:hover {
+  background: #f9fafb;
+}
+
+.faqOpen {
+  background: #f0f9ff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.questionText {
+  font-weight: 500;
+  color: #1f2937;
+  flex: 1;
+}
+
+.faqToggle {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #3b82f6;
+  min-width: 20px;
+  text-align: center;
+}
+
+.faqAnswer {
+  padding: 1.25rem;
+  background: white;
+  border-top: 1px solid #f3f4f6;
+}
+
+.faqAnswer p {
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.noResults {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6b7280;
+}
+
+.noResultsIcon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.noResults h4 {
+  font-size: 1.25rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.noResults p {
+  margin: 0;
+}
+
+/* Contact Section */
+.contactGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.contactCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.contactCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.emergencyCard {
+  border: 2px solid #ef4444;
+  background: #fef2f2;
+}
+
+.contactIcon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.contactInfo h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 0.5rem;
+}
+
+.contactInfo p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.contactButton {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #3b82f6;
+  background: #3b82f6;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  width: 100%;
+}
+
+.contactButton:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.emergencyButton {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+}
+
+.emergencyButton:hover {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.availableBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #10b981;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.supportHours {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.supportHours h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hoursGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.hourSlot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.day {
+  font-weight: 500;
+  color: #374151;
+}
+
+.time {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Tutorials Section */
+.tutorialsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.tutorialCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.tutorialCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.tutorialThumbnail {
+  position: relative;
+  height: 120px;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumbnailIcon {
+  font-size: 3rem;
+  opacity: 0.8;
+}
+
+.videoDuration {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.playButton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: #3b82f6;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.tutorialCard:hover .playButton {
+  opacity: 1;
+}
+
+.tutorialInfo {
+  padding: 1.25rem;
+}
+
+.tutorialInfo h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 0.5rem;
+}
+
+.tutorialInfo p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.watchButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid #3b82f6;
+  background: white;
+  color: #3b82f6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  width: 100%;
+}
+
+.watchButton:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.learningPath {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.learningPath h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pathSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pathStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.stepNumber {
+  background: #3b82f6;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.stepContent h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 0.25rem;
+}
+
+.stepContent p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Community Section */
+.communityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.communityCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.communityCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.communityIcon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.communityCard h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 0.75rem;
+}
+
+.communityCard p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.communityButton {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #3b82f6;
+  background: white;
+  color: #3b82f6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  width: 100%;
+}
+
+.communityButton:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Emergency Banner */
+.emergencyBanner {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.emergencyContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.emergencyIcon {
+  font-size: 2rem;
+}
+
+.emergencyText h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.emergencyText p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.emergencyButton {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid white;
+  background: transparent;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.emergencyButton:hover {
+  background: white;
+  color: #ef4444;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dashboardMain {
+    margin-left: 4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardMain {
+    margin-left: 0;
+  }
+
+  .helpContainer {
+    padding: 1rem;
+    margin-top: 70px;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .quickHelp {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tabsNav {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .tabButton {
+    border-bottom: 1px solid #e5e7eb;
+    border-left: 4px solid transparent;
+    justify-content: center;
+  }
+
+  .tabActive {
+    border-left-color: #3b82f6;
+    border-bottom-color: #e5e7eb;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchBox {
+    min-width: auto;
+  }
+
+  .contactGrid,
+  .tutorialsGrid,
+  .communityGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .emergencyBanner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .emergencyContent {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* Dark Theme */
+[data-bs-theme="dark"] .dashboardContainer {
+  background-color: #111827;
+}
+
+[data-bs-theme="dark"] .tabsContainer,
+[data-bs-theme="dark"] .helpCard,
+[data-bs-theme="dark"] .faqCategory,
+[data-bs-theme="dark"] .contactCard,
+[data-bs-theme="dark"] .tutorialCard,
+[data-bs-theme="dark"] .communityCard,
+[data-bs-theme="dark"] .supportHours,
+[data-bs-theme="dark"] .learningPath,
+[data-bs-theme="dark"] .faqItem,
+[data-bs-theme="dark"] .hourSlot,
+[data-bs-theme="dark"] .pathStep {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .header h1 {
+  color: #60a5fa;
+}
+
+[data-bs-theme="dark"] .searchInput {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .faqQuestion {
+  background: #374151;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .faqOpen {
+  background: #1e3a8a;
+}
+
+[data-bs-theme="dark"] .faqAnswer {
+  background: #374151;
+}

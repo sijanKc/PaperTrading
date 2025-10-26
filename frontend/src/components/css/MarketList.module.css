@@ -1,0 +1,417 @@
+/* Market List Wrapper */
+.marketListWrapper {
+  transition: all 0.3s ease;
+  margin-top: 20px;
+  padding: 1rem;
+}
+
+.sidebarCollapsed {
+  width: calc(100vw - 70px);
+  margin-left: 70px;
+}
+
+.sidebarOpen {
+  width: calc(100vw - 280px);
+  margin-left: 280px;
+}
+
+/* Market List Card */
+.marketListCard {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.darkTheme .marketListCard {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+}
+
+/* Header */
+.marketListHeader {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  padding: 1.5rem;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cardTitle {
+  color: white;
+  margin: 0;
+  font-weight: 700;
+}
+
+.liveBadge {
+  animation: pulse 2s infinite;
+}
+
+.controlsSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.searchGroup {
+  min-width: 250px;
+}
+
+.searchInput {
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.searchInput:focus {
+  background: white;
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+}
+
+.filterDropdown .dropdownToggle {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Table Container */
+.tableContainer {
+  overflow-x: auto;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.marketTable {
+  margin: 0;
+  min-width: 800px;
+}
+
+.tableHeader {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.darkTheme .tableHeader {
+  background: #1e293b;
+}
+
+.tableHeader th {
+  border: none;
+  padding: 1rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  background: inherit;
+}
+
+.darkTheme .tableHeader th {
+  color: #94a3b8;
+}
+
+.sortable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.sortable:hover {
+  color: #3b82f6;
+}
+
+/* Stock Rows */
+.stockRow {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.darkTheme .stockRow {
+  border-bottom: 1px solid #334155;
+}
+
+.stockRow:hover {
+  background: #f1f5f9;
+  transform: translateX(2px);
+}
+
+.darkTheme .stockRow:hover {
+  background: #1e293b;
+}
+
+.stockRow td {
+  padding: 1rem;
+  vertical-align: middle;
+  border: none;
+}
+
+/* Stock Info */
+.stockInfo {
+  min-width: 200px;
+}
+
+.symbolName {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stockSymbol {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.darkTheme .stockSymbol {
+  color: #f1f5f9;
+}
+
+.stockName {
+  color: #64748b;
+  font-size: 0.8rem;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.darkTheme .stockName {
+  color: #94a3b8;
+}
+
+/* Price Cell */
+.priceCell {
+  min-width: 120px;
+}
+
+.currentPrice {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.darkTheme .currentPrice {
+  color: #f1f5f9;
+}
+
+.priceRange {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.darkTheme .priceRange {
+  color: #94a3b8;
+}
+
+/* Change Cell */
+.changeCell {
+  min-width: 120px;
+}
+
+.changeIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.changeIndicator.positive {
+  background: #f0fdf4;
+  color: #059669;
+}
+
+.changeIndicator.negative {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.darkTheme .changeIndicator.positive {
+  background: #064e3b;
+  color: #34d399;
+}
+
+.darkTheme .changeIndicator.negative {
+  background: #7f1d1d;
+  color: #f87171;
+}
+
+.changeValue {
+  font-size: 0.9rem;
+}
+
+.changePercent {
+  font-size: 0.8rem;
+}
+
+.changeIcon {
+  font-size: 0.8rem;
+}
+
+/* Volume Cell */
+.volumeCell {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.darkTheme .volumeCell {
+  color: #94a3b8;
+}
+
+/* Sector Cell */
+.sectorBadge {
+  font-size: 0.7rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 12px;
+}
+
+/* Action Cell */
+.actionCell {
+  min-width: 140px;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.buyBtn, .sellBtn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+/* No Results */
+.noResults {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.noResultsContent {
+  color: #64748b;
+}
+
+.noResultsIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.noResultsContent h5 {
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.noResultsContent p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.darkTheme .noResultsContent {
+  color: #94a3b8;
+}
+
+/* Footer */
+.marketListFooter {
+  background: #f8fafc;
+  border: none;
+  padding: 1rem 1.5rem;
+}
+
+.darkTheme .marketListFooter {
+  background: #1e293b;
+}
+
+.footerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Live Animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebarOpen,
+  .sidebarCollapsed {
+    width: 100vw !important;
+    margin-left: 0 !important;
+    padding: 0.5rem;
+  }
+
+  .headerContent {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controlsSection {
+    justify-content: center;
+  }
+
+  .searchGroup {
+    min-width: 200px;
+  }
+
+  .footerContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .buyBtn, .sellBtn {
+    min-width: 50px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .titleSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .controlsSection {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .searchGroup,
+  .filterDropdown,
+  .refreshBtn {
+    width: 100%;
+  }
+}
