@@ -431,7 +431,7 @@
 
 .name {
   font-weight: 600;
-  color: #059669; 
+  color: #059669;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -600,22 +600,22 @@
   .dashboardMain {
     margin-left: 4rem;
   }
-  
+
   .mainContent {
     grid-template-columns: 1fr;
   }
-  
+
   .controls {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .timeframeSelector,
   .categorySelector {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .timeframeButtons,
   .categoryButtons {
     justify-content: center;
@@ -646,10 +646,10 @@
   .tableHeader span:nth-child(5),
   .tableHeader span:nth-child(6),
   .tableHeader span:nth-child(7),
-  .tableRow > div:nth-child(4),
-  .tableRow > div:nth-child(5),
-  .tableRow > div:nth-child(6),
-  .tableRow > div:nth-child(7) {
+  .tableRow>div:nth-child(4),
+  .tableRow>div:nth-child(5),
+  .tableRow>div:nth-child(6),
+  .tableRow>div:nth-child(7) {
     display: none;
   }
 
@@ -674,6 +674,7 @@
 }
 
 @media (max-width: 480px) {
+
   .timeframeButtons,
   .categoryButtons {
     flex-direction: column;
@@ -744,4 +745,45 @@
 [data-bs-theme="dark"] .changeNeutral {
   background: #374151;
   color: #d1d5db;
+}
+
+/* Supplemental Dark Mode Fixes */
+[data-bs-theme="dark"] .tableHeader,
+[data-bs-theme="dark"] .tableHeader span,
+[data-bs-theme="dark"] .traderInfo h4,
+[data-bs-theme="dark"] .tradesCell,
+[data-bs-theme="dark"] .winRateText,
+[data-bs-theme="dark"] .profitAmount,
+[data-bs-theme="dark"] .rankValue,
+[data-bs-theme="dark"] .userIdentity h4,
+[data-bs-theme="dark"] .metricValue {
+  color: #000000 !important;
+}
+
+[data-bs-theme="dark"] .sectionHeader h3 {
+  color: #000000 !important;
+}
+
+[data-bs-theme="dark"] .currentUser {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  border-left-color: #60a5fa;
+}
+
+[data-bs-theme="dark"] .strategyTag,
+[data-bs-theme="dark"] .strategy {
+  background-color: #374151;
+  color: #d1d5db;
+}
+
+[data-bs-theme="dark"] .rankLabel,
+[data-bs-theme="dark"] .metricLabel,
+[data-bs-theme="dark"] .username,
+[data-bs-theme="dark"] .profitPercent,
+[data-bs-theme="dark"] .statsSummary {
+  color: #000000 !important;
+  /* Made black as requested */
+}
+
+[data-bs-theme="dark"] .tableRow:hover {
+  background-color: #1f2937 !important;
 }

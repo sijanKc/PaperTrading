@@ -1,0 +1,22 @@
+/* Owned Quantity Info */
+.ownedQuantityInfo {
+    background: #dbeafe;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #1e40af;
+}
+
+.infoIcon {
+    font-size: 1.1rem;
+}
+
+.ownedQuantityInfo strong {
+    color: #1e3a8a;
+    font-weight: 700;
+}

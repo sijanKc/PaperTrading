@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Badge, Form, InputGroup, Button, Dropdown } from 'react-bootstrap';
+import { 
+  Card, 
+  Table, 
+  Badge, 
+  Form, 
+  InputGroup, 
+  Button, 
+  Dropdown, 
+  Spinner,
+  Alert
+} from 'react-bootstrap';
 import styles from '../css/MarketList.module.css';
 
 const MarketList = () => {
@@ -8,7 +18,9 @@ const MarketList = () => {
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [markets, setMarkets] = useState([]);
+  const [stocks, setStocks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [theme, setTheme] = useState('dark');
 
   // Sidebar state detection
@@ -32,126 +44,42 @@ const MarketList = () => {
     setTheme(savedTheme);
   }, []);
 
-  // Sample NEPSE market data
-  const nepseStocks = [
-    {
-      symbol: 'NLIC',
-      name: 'Nepal Life Insurance Co. Ltd.',
-      currentPrice: 765.00,
-      change: 12.50,
-      changePercent: 1.66,
-      volume: 15420,
-      sector: 'Insurance',
-      previousClose: 752.50,
-      dayHigh: 772.00,
-      dayLow: 758.00
-    },
-    {
-      symbol: 'NIBL',
-      name: 'Nepal Investment Bank Ltd.',
-      currentPrice: 452.75,
-      change: -5.25,
-      changePercent: -1.15,
-      volume: 8925,
-      sector: 'Commercial Banks',
-      previousClose: 458.00,
-      dayHigh: 460.00,
-      dayLow: 448.00
-    },
-    {
-      symbol: 'SCB',
-      name: 'Standard Chartered Bank Nepal Ltd.',
-      currentPrice: 625.00,
-      change: 8.75,
-      changePercent: 1.42,
-      volume: 5678,
-      sector: 'Commercial Banks',
-      previousClose: 616.25,
-      dayHigh: 630.00,
-      dayLow: 620.00
-    },
-    {
-      symbol: 'NTC',
-      name: 'Nepal Telecom Company Ltd.',
-      currentPrice: 835.25,
-      change: 15.50,
-      changePercent: 1.89,
-      volume: 23456,
-      sector: 'Telecommunication',
-      previousClose: 819.75,
-      dayHigh: 842.00,
-      dayLow: 825.00
-    },
-    {
-      symbol: 'HIDCL',
-      name: 'Hydropower Investment & Development Co. Ltd.',
-      currentPrice: 285.50,
-      change: -3.25,
-      changePercent: -1.13,
-      volume: 12345,
-      sector: 'Hydroelectricity',
-      previousClose: 288.75,
-      dayHigh: 290.00,
-      dayLow: 282.00
-    },
-    {
-      symbol: 'CIT',
-      name: 'Citizens Bank International Ltd.',
-      currentPrice: 345.00,
-      change: 4.50,
-      changePercent: 1.32,
-      volume: 7890,
-      sector: 'Commercial Banks',
-      previousClose: 340.50,
-      dayHigh: 348.00,
-      dayLow: 342.00
-    },
-    {
-      symbol: 'NIFRA',
-      name: 'Nepal Infrastructure Bank Ltd.',
-      currentPrice: 198.75,
-      change: 2.25,
-      changePercent: 1.15,
-      volume: 15670,
-      sector: 'Development Banks',
-      previousClose: 196.50,
-      dayHigh: 202.00,
-      dayLow: 195.00
-    },
-    {
-      symbol: 'SHL',
-      name: 'Soaltee Hotel Ltd.',
-      currentPrice: 312.00,
-      change: -8.00,
-      changePercent: -2.50,
-      volume: 4567,
-      sector: 'Hotels',
-      previousClose: 320.00,
-      dayHigh: 318.00,
-      dayLow: 308.00
+  // Fetch stocks from backend
+  const fetchStocks = async () => {
+    try {
+      setError('');
+      const response = await fetch('http://localhost:5000/api/market/stocks');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setStocks(result.data || []);
+      } else {
+        throw new Error(result.message || 'Failed to fetch stocks');
+      }
+    } catch (error) {
+      console.error('Error fetching stocks:', error);
+      setError('Failed to load market data. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
+  // Load stocks on component mount
   useEffect(() => {
-    // Simulate real-time price updates
-    const interval = setInterval(() => {
-      setMarkets(prevMarkets => 
-        prevMarkets.map(stock => ({
-          ...stock,
-          currentPrice: stock.currentPrice + (Math.random() - 0.5) * 2,
-          change: stock.change + (Math.random() - 0.5) * 0.5
-        }))
-      );
-    }, 5000);
+    fetchStocks();
 
-    // Initial data load
-    setMarkets(nepseStocks);
-
+    // Set up real-time updates every 2 minutes (matching backend)
+    const interval = setInterval(fetchStocks, 120000);
     return () => clearInterval(interval);
   }, []);
 
   // Filter and sort stocks
-  const filteredStocks = markets
+  const filteredStocks = stocks
     .filter(stock => {
       const matchesSearch = stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           stock.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -190,7 +118,7 @@ const MarketList = () => {
       }
     });
 
-  const sectors = ['all', ...new Set(nepseStocks.map(stock => stock.sector))];
+  const sectors = ['all', ...new Set(stocks.map(stock => stock.sector))];
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -210,16 +138,34 @@ const MarketList = () => {
     const colors = {
       'Commercial Banks': 'primary',
       'Insurance': 'success',
-      'Hydroelectricity': 'info',
-      'Telecommunication': 'warning',
-      'Development Banks': 'secondary',
-      'Hotels': 'danger'
+      'HydroPower': 'info',
+      'Finance': 'warning',
+      'Development Bank': 'secondary'
     };
     return colors[sector] || 'light';
   };
 
+  if (loading) {
+    return (
+      <div className={`${styles.marketListWrapper} ${sidebarCollapsed ? styles.sidebarCollapsed : styles.sidebarOpen}`}>
+        <Card className={styles.marketListCard}>
+          <Card.Body className="text-center py-5">
+            <Spinner animation="border" variant="primary" />
+            <p className="mt-3 mb-0">Loading NEPSE market data...</p>
+          </Card.Body>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className={`${styles.marketListWrapper} ${sidebarCollapsed ? styles.sidebarCollapsed : styles.sidebarOpen} ${theme === 'dark' ? styles.darkTheme : ''}`}>
+      {error && (
+        <Alert variant="danger" className="mb-3">
+          {error}
+        </Alert>
+      )}
+      
       <Card className={styles.marketListCard}>
         <Card.Header className={styles.marketListHeader}>
           <div className={styles.headerContent}>
@@ -263,12 +209,10 @@ const MarketList = () => {
 
               <Button 
                 variant="outline-primary"
-                onClick={() => {
-                  // Refresh data
-                  setMarkets([...nepseStocks]);
-                }}
+                onClick={fetchStocks}
+                disabled={loading}
               >
-                🔄 Refresh
+                {loading ? <Spinner size="sm" /> : '🔄 Refresh'}
               </Button>
             </div>
           </div>
@@ -292,7 +236,6 @@ const MarketList = () => {
                     Volume {getSortIcon('volume')}
                   </th>
                   <th>Sector</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -306,42 +249,32 @@ const MarketList = () => {
                     </td>
                     <td className={styles.priceCell}>
                       <div className={styles.currentPrice}>
-                        रु {stock.currentPrice.toFixed(2)}
+                        रु {stock.currentPrice?.toFixed(2) || '0.00'}
                       </div>
                       <div className={styles.priceRange}>
-                        H: रु {stock.dayHigh.toFixed(2)} | L: रु {stock.dayLow.toFixed(2)}
+                        H: रु {stock.dayHigh?.toFixed(2) || '0.00'} | L: रु {stock.dayLow?.toFixed(2) || '0.00'}
                       </div>
                     </td>
                     <td className={styles.changeCell}>
-                      <div className={`${styles.changeIndicator} ${stock.change >= 0 ? styles.positive : styles.negative}`}>
+                      <div className={`${styles.changeIndicator} ${(stock.changePercent || 0) >= 0 ? styles.positive : styles.negative}`}>
                         <span className={styles.changeValue}>
-                          {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}
+                          {(stock.change || 0) >= 0 ? '+' : ''}{(stock.change || 0).toFixed(2)}
                         </span>
                         <span className={styles.changePercent}>
-                          ({stock.change >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%)
+                          ({(stock.changePercent || 0) >= 0 ? '+' : ''}{(stock.changePercent || 0).toFixed(2)}%)
                         </span>
                         <span className={styles.changeIcon}>
-                          {stock.change >= 0 ? '🔼' : '🔽'}
+                          {(stock.changePercent || 0) >= 0 ? '🔼' : '🔽'}
                         </span>
                       </div>
                     </td>
                     <td className={styles.volumeCell}>
-                      {stock.volume.toLocaleString('en-NP')}
+                      {(stock.volume || 0).toLocaleString('en-NP')}
                     </td>
                     <td className={styles.sectorCell}>
                       <Badge bg={getSectorColor(stock.sector)} className={styles.sectorBadge}>
                         {stock.sector}
                       </Badge>
-                    </td>
-                    <td className={styles.actionCell}>
-                      <div className={styles.actionButtons}>
-                        <Button size="sm" variant="success" className={styles.buyBtn}>
-                          Buy
-                        </Button>
-                        <Button size="sm" variant="danger" className={styles.sellBtn}>
-                          Sell
-                        </Button>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -363,10 +296,10 @@ const MarketList = () => {
         <Card.Footer className={styles.marketListFooter}>
           <div className={styles.footerContent}>
             <small className="text-muted">
-              Showing {filteredStocks.length} of {nepseStocks.length} NEPSE stocks
+              Showing {filteredStocks.length} of {stocks.length} NEPSE stocks
             </small>
             <small className="text-muted">
-              Data updates every 5 seconds • Paper Trading Mode
+              Data updates every 2 minutes • Paper Trading Mode
             </small>
           </div>
         </Card.Footer>

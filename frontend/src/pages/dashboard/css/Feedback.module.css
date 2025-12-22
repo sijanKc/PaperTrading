@@ -134,7 +134,8 @@
   font-size: 0.9rem;
 }
 
-.formInput, .formTextarea {
+.formInput,
+.formTextarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #d1d5db;
@@ -143,7 +144,8 @@
   transition: all 0.2s ease;
 }
 
-.formInput:focus, .formTextarea:focus {
+.formInput:focus,
+.formTextarea:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -223,7 +225,8 @@
 }
 
 /* Sidebar Cards */
-.tipsCard, .statsCard {
+.tipsCard,
+.statsCard {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -231,7 +234,8 @@
   margin-bottom: 1.5rem;
 }
 
-.tipsCard h4, .statsCard h4 {
+.tipsCard h4,
+.statsCard h4 {
   font-size: 1.1rem;
   font-weight: 600;
   color: #1f2937;
@@ -526,7 +530,7 @@
   .dashboardMain {
     margin-left: 4rem;
   }
-  
+
   .tabColumns {
     grid-template-columns: 1fr;
   }
@@ -615,4 +619,30 @@
 
 [data-bs-theme="dark"] .responseSection {
   background: #374151;
+}
+
+/* Supplemental Dark Mode Fixes */
+[data-bs-theme="dark"] .cancelButton {
+  background-color: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+[data-bs-theme="dark"] .cancelButton:hover {
+  background-color: #4b5563;
+}
+
+[data-bs-theme="dark"] .formGroup label {
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .tabButton:hover {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .tabActive {
+  background-color: #1f2937;
+  color: #60a5fa !important;
+  border-bottom-color: #60a5fa !important;
 }

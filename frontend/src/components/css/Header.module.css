@@ -486,3 +486,74 @@
     min-width: 280px;
   }
 }
+
+/* CSS Variables for dynamic sizing */
+:root {
+  --sidebar-width: 280px;
+  --header-width: calc(100vw - var(--sidebar-width));
+  --header-left: var(--sidebar-width);
+  --header-bg: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  --header-border: #475569;
+  --text-color: white;
+}
+
+/* Header base styles */
+.header {
+  background: var(--header-bg) !important;
+  border-bottom: 1px solid var(--header-border);
+  padding: 0.5rem 0;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1030;
+  position: fixed;
+  top: 0;
+  height: 70px;
+  width: var(--header-width) !important;
+  left: var(--header-left) !important;
+}
+
+/* Container fix for proper spacing */
+.headerContainer {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  max-width: 100% !important;
+}
+
+/* Loading state */
+.loading {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Light theme support */
+.lightTheme {
+  --header-bg: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  --header-border: #d1d5db;
+  --text-color: white;
+}
+
+/* Navbar spacer to prevent content hiding */
+.navbarSpacer {
+  height: 70px;
+  width: 100%;
+}
+
+/* Responsive behavior */
+@media (max-width: 991.98px) {
+  .header {
+    width: 100vw !important;
+    left: 0 !important;
+  }
+  
+  .quickStats {
+    display: none !important;
+  }
+  
+  .headerSearch {
+    display: none !important;
+  }
+}
+
+/* Rest of your existing CSS remains the same... */

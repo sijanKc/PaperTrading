@@ -622,7 +622,204 @@
   .dashboardMain {
     margin-left: 4rem;
   }
-  
+
+  .analyticsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardMain {
+    margin-left: 0;
+  }
+
+  .journalContainer {
+    padding: 1rem;
+    margin-top: 70px;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .tabsNav {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .tabButton {
+    border-bottom: 1px solid #e5e7eb;
+    border-left: 4px solid transparent;
+  }
+
+  .tabButtonActive {
+    border-left-color: #3b82f6;
+    border-bottom-color: #e5e7eb;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tabHeader {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .barLabel {
+    width: 80px;
+    font-size: 0.9rem;
+    color: #374151;
+  }
+}
+
+.barContainer {
+  flex: 1;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 20px;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.barWin {
+  background: #10b981;
+}
+
+.barLoss {
+  background: #ef4444;
+}
+
+.barValue {
+  width: 40px;
+  text-align: right;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Strategy Stats */
+.strategyStats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.strategyItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.strategyItem:last-child {
+  border-bottom: none;
+}
+
+.strategyName {
+  font-weight: 500;
+  color: #374151;
+}
+
+.tradeCount {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Performance Chart */
+.performanceChart {
+  margin-top: 2rem;
+}
+
+.chartPlaceholder {
+  background: #f8fafc;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.placeholderContent {
+  color: #6b7280;
+}
+
+.placeholderIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.placeholderContent p:first-of-type {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+/* Insights */
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.insightCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.insightCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.insightIcon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.insightCard h4 {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.insightCard p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Text Colors */
+.textSuccess {
+  color: #10b981 !important;
+}
+
+.textDanger {
+  color: #ef4444 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dashboardMain {
+    margin-left: 4rem;
+  }
+
   .analyticsGrid {
     grid-template-columns: 1fr;
   }
@@ -677,41 +874,110 @@
 }
 
 /* Dark Theme */
-[data-bs-theme="dark"] .dashboardContainer {
+[data-bs-theme="dark"] .dashboardContainer,
+:global([data-theme="dark"]) .dashboardContainer,
+:global(.dark) .dashboardContainer {
   background-color: #111827;
 }
 
 [data-bs-theme="dark"] .tabsContainer,
+:global([data-theme="dark"]) .tabsContainer,
+:global(.dark) .tabsContainer,
 [data-bs-theme="dark"] .statCard,
+:global([data-theme="dark"]) .statCard,
+:global(.dark) .statCard,
 [data-bs-theme="dark"] .tradeForm,
+:global([data-theme="dark"]) .tradeForm,
+:global(.dark) .tradeForm,
 [data-bs-theme="dark"] .analyticsCard,
-[data-bs-theme="dark"] .insightCard {
+:global([data-theme="dark"]) .analyticsCard,
+:global(.dark) .analyticsCard,
+[data-bs-theme="dark"] .insightCard,
+:global([data-theme="dark"]) .insightCard,
+:global(.dark) .insightCard {
   background: #1f2937;
   border-color: #374151;
   color: #f9fafb;
 }
 
-[data-bs-theme="dark"] .header h1 {
+[data-bs-theme="dark"] .header h1,
+:global([data-theme="dark"]) .header h1,
+:global(.dark) .header h1 {
   color: #f9fafb;
 }
 
 [data-bs-theme="dark"] .formGroup input,
+:global([data-theme="dark"]) .formGroup input,
+:global(.dark) .formGroup input,
 [data-bs-theme="dark"] .formGroup select,
-[data-bs-theme="dark"] .formGroup textarea {
+:global([data-theme="dark"]) .formGroup select,
+:global(.dark) .formGroup select,
+[data-bs-theme="dark"] .formGroup textarea,
+:global([data-theme="dark"]) .formGroup textarea,
+:global(.dark) .formGroup textarea {
   background: #374151;
   border-color: #4b5563;
   color: #f9fafb;
 }
 
-[data-bs-theme="dark"] .statIcon {
+[data-bs-theme="dark"] .statIcon,
+:global([data-theme="dark"]) .statIcon,
+:global(.dark) .statIcon {
   background: #374151;
 }
 
-[data-bs-theme="dark"] .barContainer {
+[data-bs-theme="dark"] .barContainer,
+:global([data-theme="dark"]) .barContainer,
+:global(.dark) .barContainer {
   background: #374151;
 }
 
-[data-bs-theme="dark"] .chartPlaceholder {
+[data-bs-theme="dark"] .chartPlaceholder,
+:global([data-theme="dark"]) .chartPlaceholder,
+:global(.dark) .chartPlaceholder {
   background: #374151;
   border-color: #4b5563;
+}
+
+/* Supplemental Dark Mode Fixes */
+[data-bs-theme="dark"] .tableHeader th,
+[data-bs-theme="dark"] .tableCell,
+[data-bs-theme="dark"] .symbol,
+[data-bs-theme="dark"] .barValue,
+[data-bs-theme="dark"] .strategyName,
+[data-bs-theme="dark"] .insightCard p,
+[data-bs-theme="dark"] .statContent h3 {
+  color: #f9fafb !important;
+}
+
+/* User REQUEST: Make exact text black */
+[data-bs-theme="dark"] .tabButton,
+[data-bs-theme="dark"] .tabActive {
+  color: #000000 !important;
+}
+
+[data-bs-theme="dark"] .tableRow:hover {
+  background-color: #374151 !important;
+}
+
+[data-bs-theme="dark"] .editButton:hover {
+  background-color: #1e40af !important;
+  color: #dbeafe !important;
+}
+
+[data-bs-theme="dark"] .deleteButton:hover {
+  background-color: #991b1b !important;
+  color: #fee2e2 !important;
+}
+
+[data-bs-theme="dark"] .tabButton:hover {
+  background-color: #e5e7eb;
+  /* Light background for black text visibility on hover */
+  color: #000000 !important;
+}
+
+[data-bs-theme="dark"] .tabActive {
+  background-color: #ffffff;
+  color: #000000 !important;
+  border-bottom-color: #60a5fa !important;
 }

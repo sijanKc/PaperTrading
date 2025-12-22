@@ -5,21 +5,161 @@ import {
   Button, 
   ButtonGroup,
   Badge,
-  Form,
+  Spinner,
+  Alert,
   ProgressBar
 } from 'react-bootstrap';
+import { marketService } from '../../services/marketService';
 import styles from '../css/ChartWidget.module.css';
 
 const ChartWidget = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [chartType, setChartType] = useState('line'); // 'line', 'candle', 'area'
-  const [timeframe, setTimeframe] = useState('1D'); // '1D', '1W', '1M', '3M', '1Y'
-  const [selectedStock, setSelectedStock] = useState('NEPSE');
+  const [chartType, setChartType] = useState('line');
+  const [timeframe, setTimeframe] = useState('1D');
+  const [selectedStock, setSelectedStock] = useState(null);
   const [chartData, setChartData] = useState([]);
+  const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stocksLoading, setStocksLoading] = useState(true);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [theme, setTheme] = useState('dark');
+  const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const canvasRef = useRef(null);
+
+  // Fetch stocks from backend
+  const fetchStocks = async () => {
+    try {
+      setStocksLoading(true);
+      const response = await marketService.getAllStocks();
+      
+      if (response.success && Array.isArray(response.data)) {
+        const dynamicStocks = response.data.map(stock => ({
+          symbol: stock.symbol,
+          name: stock.name,
+          color: generateColorForStock(stock.symbol),
+          currentPrice: stock.currentPrice,
+          sector: stock.sector,
+          volatility: stock.volatility
+        }));
+        
+        setStocks(dynamicStocks);
+        
+        // Auto-select first stock
+        if (dynamicStocks.length > 0 && !selectedStock) {
+          setSelectedStock(dynamicStocks[0].symbol);
+        }
+      } else {
+        throw new Error('Invalid stocks data from backend');
+      }
+    } catch (error) {
+      console.error('Error fetching stocks:', error);
+      setError('Failed to load stocks. Using fallback data.');
+      setStocks(getFallbackStocks());
+    } finally {
+      setStocksLoading(false);
+    }
+  };
+
+  // Fetch chart data from backend
+  const fetchChartData = async () => {
+    if (!selectedStock) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await marketService.getChartData(selectedStock, timeframe);
+      
+      if (response.success && Array.isArray(response.data)) {
+        setChartData(response.data);
+        setLastUpdated(new Date());
+      } else {
+        throw new Error('Invalid chart data received');
+      }
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      setError('Failed to load chart data. Using simulated data.');
+      // Generate fallback data based on current stock
+      const currentStock = stocks.find(s => s.symbol === selectedStock);
+      if (currentStock) {
+        const fallbackData = generateFallbackChartData(timeframe, currentStock);
+        setChartData(fallbackData);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate dynamic color for stocks
+  const generateColorForStock = (symbol) => {
+    const colors = [
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+      '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#a855f7'
+    ];
+    
+    const hash = symbol.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  // Fallback stocks if backend fails
+  const getFallbackStocks = () => {
+    return [
+      { symbol: 'NEPSE', name: 'NEPSE Index', color: '#3b82f6', currentPrice: 2100, sector: 'Index' },
+      { symbol: 'NABIL', name: 'Nabil Bank', color: '#10b981', currentPrice: 845, sector: 'Commercial Banks' },
+      { symbol: 'SCB', name: 'Standard Chartered', color: '#f59e0b', currentPrice: 382, sector: 'Commercial Banks' }
+    ];
+  };
+
+  // Fallback chart data generator
+  const generateFallbackChartData = (timeframe, stock) => {
+    const data = [];
+    const now = new Date();
+    
+    let points = 78;
+    let timeMultiplier = 1;
+    const basePrice = stock.currentPrice || 1000;
+    const volatility = stock.volatility || 0.02;
+
+    switch (timeframe) {
+      case '1D': points = 78; timeMultiplier = 1; break;
+      case '1W': points = 35; timeMultiplier = 7; break;
+      case '1M': points = 30; timeMultiplier = 30; break;
+      case '3M': points = 90; timeMultiplier = 90; break;
+      case '1Y': points = 52; timeMultiplier = 365; break;
+    }
+
+    let currentPrice = basePrice;
+
+    for (let i = points - 1; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * (timeMultiplier * 60 * 60 * 1000) / points);
+      
+      const open = currentPrice;
+      const change = (Math.random() - 0.5) * 2 * volatility * currentPrice;
+      const close = open + change;
+      const high = Math.max(open, close) + Math.random() * volatility * currentPrice;
+      const low = Math.min(open, close) - Math.random() * volatility * currentPrice;
+
+      currentPrice = close;
+
+      const volume = Math.floor(Math.random() * 1000000) + 100000;
+
+      data.push({
+        time: time.getTime(),
+        open: parseFloat(open.toFixed(2)),
+        high: parseFloat(high.toFixed(2)),
+        low: parseFloat(low.toFixed(2)),
+        close: parseFloat(close.toFixed(2)),
+        volume: volume
+      });
+    }
+
+    return data;
+  };
 
   // Sidebar state detection
   useEffect(() => {
@@ -42,127 +182,25 @@ const ChartWidget = () => {
     setTheme(savedTheme);
   }, []);
 
-  // Sample NEPSE stocks
-  const stocks = [
-    { symbol: 'NEPSE', name: 'NEPSE Index', color: '#3b82f6' },
-    { symbol: 'NLIC', name: 'Nepal Life Insurance', color: '#10b981' },
-    { symbol: 'NIBL', name: 'Nepal Investment Bank', color: '#f59e0b' },
-    { symbol: 'NTC', name: 'Nepal Telecom', color: '#ef4444' },
-    { symbol: 'SHL', name: 'Soaltee Hotel', color: '#8b5cf6' }
-  ];
-
-  // Generate sample chart data based on timeframe
-  const generateChartData = (timeframe, symbol) => {
-    const data = [];
-    let basePrice = 2000; // Base price for NEPSE index
-    let volatility = 0.02; // 2% daily volatility
-    
-    // Adjust base price and volatility based on symbol
-    const stockPrices = {
-      'NEPSE': { base: 2000, vol: 0.02 },
-      'NLIC': { base: 765, vol: 0.03 },
-      'NIBL': { base: 452, vol: 0.025 },
-      'NTC': { base: 835, vol: 0.028 },
-      'SHL': { base: 312, vol: 0.035 }
-    };
-    
-    const stockConfig = stockPrices[symbol] || stockPrices['NEPSE'];
-    basePrice = stockConfig.base;
-    volatility = stockConfig.vol;
-
-    let points = 50;
-    let timeMultiplier = 1;
-
-    switch (timeframe) {
-      case '1D':
-        points = 78; // 6.5 hours * 12 points per hour
-        timeMultiplier = 1;
-        break;
-      case '1W':
-        points = 35; // 7 days * 5 points per day
-        timeMultiplier = 7;
-        break;
-      case '1M':
-        points = 30; // 30 days
-        timeMultiplier = 30;
-        break;
-      case '3M':
-        points = 90; // 90 days
-        timeMultiplier = 90;
-        break;
-      case '1Y':
-        points = 52; // 52 weeks
-        timeMultiplier = 365;
-        break;
-    }
-
-    let currentPrice = basePrice;
-    const now = new Date();
-
-    for (let i = points - 1; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * timeMultiplier * 60 * 60 * 1000);
-      
-      // Generate OHLC data for candlestick charts
-      const open = currentPrice;
-      const change = (Math.random() - 0.5) * 2 * volatility * currentPrice;
-      const high = open + Math.abs(change) * (0.5 + Math.random() * 0.5);
-      const low = open - Math.abs(change) * (0.5 + Math.random() * 0.5);
-      const close = open + change;
-      
-      // Ensure high is highest and low is lowest
-      const actualHigh = Math.max(open, close, high);
-      const actualLow = Math.min(open, close, low);
-
-      currentPrice = close;
-
-      data.push({
-        time: time.getTime(),
-        open,
-        high: actualHigh,
-        low: actualLow,
-        close,
-        volume: Math.floor(Math.random() * 1000000) + 100000
-      });
-    }
-
-    return data;
-  };
-
-  // Load chart data
+  // Fetch stocks on component mount
   useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => {
-      const data = generateChartData(timeframe, selectedStock);
-      setChartData(data);
-      setLoading(false);
-    }, 500);
+    fetchStocks();
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [timeframe, selectedStock]);
-
-  // Draw chart on canvas
+  // Fetch chart data when timeframe or stock changes
   useEffect(() => {
-    if (!chartData.length || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, width, height);
-
-    if (chartType === 'candle') {
-      drawCandlestickChart(ctx, chartData, width, height);
-    } else {
-      drawLineChart(ctx, chartData, width, height, chartType);
+    if (selectedStock && stocks.length > 0) {
+      fetchChartData();
     }
+  }, [timeframe, selectedStock, stocks]);
 
-    // Draw volume bars if there's space
-    drawVolumeBars(ctx, chartData, width, height);
+  // Auto-refresh chart data
+  useEffect(() => {
+    const interval = setInterval(fetchChartData, 120000); // Refresh every 2 minutes
+    return () => clearInterval(interval);
+  }, [selectedStock, timeframe]);
 
-  }, [chartData, chartType]);
-
+  // Draw chart functions (keep your existing drawing code)
   const drawLineChart = (ctx, data, width, height, type = 'line') => {
     if (data.length === 0) return;
 
@@ -177,11 +215,11 @@ const ChartWidget = () => {
     const range = max - min;
 
     // Draw chart area background
-    ctx.fillStyle = '#f8fafc';
+    ctx.fillStyle = theme === 'dark' ? '#1e293b' : '#f8fafc';
     ctx.fillRect(padding.left, padding.top, chartWidth, chartHeight);
 
     // Draw grid lines
-    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeStyle = theme === 'dark' ? '#334155' : '#e2e8f0';
     ctx.lineWidth = 1;
     
     // Horizontal grid lines
@@ -237,14 +275,14 @@ const ChartWidget = () => {
     ctx.fill();
 
     // Draw price labels
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = theme === 'dark' ? '#cbd5e1' : '#64748b';
     ctx.font = '12px Arial';
     ctx.textAlign = 'right';
     ctx.fillText(`रु ${lastPoint.close.toFixed(2)}`, padding.left - 10, getY(lastPoint.close));
 
     // Draw timeframe labels
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = theme === 'dark' ? '#94a3b8' : '#94a3b8';
     ctx.font = '11px Arial';
     
     const timeLabels = getTimeLabels(timeframe, data);
@@ -277,11 +315,11 @@ const ChartWidget = () => {
     const range = max - min;
 
     // Draw chart area background
-    ctx.fillStyle = '#f8fafc';
+    ctx.fillStyle = theme === 'dark' ? '#1e293b' : '#f8fafc';
     ctx.fillRect(padding.left, padding.top, chartWidth, chartHeight);
 
     // Draw grid lines
-    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeStyle = theme === 'dark' ? '#334155' : '#e2e8f0';
     ctx.lineWidth = 1;
     
     for (let i = 0; i <= 5; i++) {
@@ -321,7 +359,7 @@ const ChartWidget = () => {
 
     // Draw current price
     const lastPoint = data[data.length - 1];
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = theme === 'dark' ? '#cbd5e1' : '#64748b';
     ctx.font = '12px Arial';
     ctx.textAlign = 'right';
     const lastY = padding.top + chartHeight - ((lastPoint.close - min) / range) * chartHeight;
@@ -329,7 +367,7 @@ const ChartWidget = () => {
 
     // Draw timeframe labels
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = theme === 'dark' ? '#94a3b8' : '#94a3b8';
     ctx.font = '11px Arial';
     
     const timeLabels = getTimeLabels(timeframe, data);
@@ -362,10 +400,34 @@ const ChartWidget = () => {
       const barWidth = (chartWidth / data.length) * 0.7;
       const barHeight = (point.volume / maxVolume) * volumeHeight;
       
-      ctx.fillStyle = point.close >= point.open ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+      ctx.fillStyle = point.close >= point.open ? 
+        'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
       ctx.fillRect(x, height - volumeHeight, barWidth, barHeight);
     });
   };
+
+  // Draw chart when data changes
+  useEffect(() => {
+    if (!chartData.length || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    if (chartType === 'candle') {
+      drawCandlestickChart(ctx, chartData, width, height);
+    } else {
+      drawLineChart(ctx, chartData, width, height, chartType);
+    }
+
+    // Draw volume bars
+    drawVolumeBars(ctx, chartData, width, height);
+
+  }, [chartData, chartType, theme]);
 
   const getTimeLabels = (timeframe, data) => {
     const labels = [];
@@ -441,17 +503,56 @@ const ChartWidget = () => {
     const currentHigh = Math.max(...highs);
     const fromHigh = ((last - currentHigh) / currentHigh) * 100;
 
+    // Calculate RSI-like indicator
+    let gains = 0;
+    let losses = 0;
+    for (let i = 1; i < chartData.length; i++) {
+      const change = chartData[i].close - chartData[i-1].close;
+      if (change > 0) gains += change;
+      else losses -= change;
+    }
+    const rsi = gains + losses > 0 ? (gains / (gains + losses)) * 100 : 50;
+
+    // Calculate MACD-like indicator
+    const shortEMA = chartData.slice(-12).reduce((sum, point) => sum + point.close, 0) / 12;
+    const longEMA = chartData.slice(-26).reduce((sum, point) => sum + point.close, 0) / 26;
+    const macd = shortEMA - longEMA;
+
+    // Calculate volatility (standard deviation of returns)
+    const returns = [];
+    for (let i = 1; i < chartData.length; i++) {
+      const returnVal = (chartData[i].close - chartData[i-1].close) / chartData[i-1].close;
+      returns.push(returnVal);
+    }
+    const volatility = returns.length > 0 ? 
+      Math.sqrt(returns.reduce((sum, ret) => sum + Math.pow(ret, 2), 0) / returns.length) * 100 : 0;
+
     return {
       current: last,
       change,
       changePercent,
       fromHigh,
-      isPositive: change >= 0
+      isPositive: change >= 0,
+      rsi: isNaN(rsi) ? 50 : rsi,
+      macd: isNaN(macd) ? 0 : macd,
+      volatility: isNaN(volatility) ? 0 : volatility,
+      volume: chartData[chartData.length - 1]?.volume || 0
     };
   };
 
   const performance = getPerformanceStats();
   const currentStock = stocks.find(s => s.symbol === selectedStock);
+
+  const formatTimeAgo = (date) => {
+    if (!date) return '';
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    return `${Math.floor(minutes / 60)}h ago`;
+  };
 
   return (
     <div className={`${styles.chartWidgetWrapper} ${sidebarCollapsed ? styles.sidebarCollapsed : styles.sidebarOpen} ${theme === 'dark' ? styles.darkTheme : ''}`}>
@@ -461,7 +562,7 @@ const ChartWidget = () => {
             <div className={styles.chartTitleSection}>
               <h5 className={styles.cardTitle}>
                 <span className={styles.chartIcon}>📊</span>
-                Live Chart
+                Live Chart - {currentStock?.name || 'Loading...'}
               </h5>
               {performance && (
                 <div className={`${styles.performanceBadge} ${performance.isPositive ? styles.performanceBadgePositive : styles.performanceBadgeNegative}`}>
@@ -476,23 +577,38 @@ const ChartWidget = () => {
             </div>
             
             <div className={styles.chartControls}>
-              {/* Stock Selector */}
+              {/* Dynamic Stock Selector */}
               <Dropdown>
-                <Dropdown.Toggle variant="outline-primary" size="sm" className={styles.controlBtn}>
-                  <span className={styles.stockColor} style={{ backgroundColor: currentStock?.color }}></span>
-                  {selectedStock}
+                <Dropdown.Toggle variant="outline-primary" size="sm" className={styles.controlBtn} disabled={stocksLoading}>
+                  {stocksLoading ? (
+                    <Spinner animation="border" size="sm" />
+                  ) : (
+                    <>
+                      <span className={styles.stockColor} style={{ backgroundColor: currentStock?.color }}></span>
+                      {selectedStock || 'Select Stock'}
+                    </>
+                  )}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  {stocks.map(stock => (
-                    <Dropdown.Item 
-                      key={stock.symbol}
-                      onClick={() => setSelectedStock(stock.symbol)}
-                      className={styles.stockOption}
-                    >
-                      <span className={styles.stockColor} style={{ backgroundColor: stock.color }}></span>
-                      {stock.symbol} - {stock.name}
+                  {stocksLoading ? (
+                    <Dropdown.Item disabled>
+                      <Spinner animation="border" size="sm" /> Loading stocks...
                     </Dropdown.Item>
-                  ))}
+                  ) : (
+                    stocks.map(stock => (
+                      <Dropdown.Item 
+                        key={stock.symbol}
+                        onClick={() => setSelectedStock(stock.symbol)}
+                        className={styles.stockOption}
+                      >
+                        <span className={styles.stockColor} style={{ backgroundColor: stock.color }}></span>
+                        {stock.symbol} - {stock.name}
+                        <Badge bg="secondary" className="ms-2">
+                          रु {stock.currentPrice?.toFixed(2) || '0.00'}
+                        </Badge>
+                      </Dropdown.Item>
+                    ))
+                  )}
                 </Dropdown.Menu>
               </Dropdown>
 
@@ -534,6 +650,18 @@ const ChartWidget = () => {
                   </Button>
                 ))}
               </ButtonGroup>
+
+              {/* Refresh Button */}
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={fetchChartData}
+                disabled={loading}
+                className={styles.controlBtn}
+                title="Refresh chart data"
+              >
+                {loading ? <Spinner animation="border" size="sm" /> : '🔄'}
+              </Button>
             </div>
           </div>
 
@@ -556,14 +684,36 @@ const ChartWidget = () => {
                   {performance.fromHigh >= 0 ? '+' : ''}{performance.fromHigh.toFixed(2)}%
                 </span>
               </div>
+              {currentStock?.sector && (
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Sector</span>
+                  <span className={styles.statValue}>{currentStock.sector}</span>
+                </div>
+              )}
             </div>
           )}
         </Card.Header>
 
         <Card.Body className={styles.chartBody}>
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="warning" className={styles.errorAlert}>
+              <div className={styles.alertContent}>
+                <span>{error}</span>
+                <button 
+                  onClick={fetchChartData}
+                  className={styles.refreshButton}
+                  disabled={loading}
+                >
+                  {loading ? <Spinner animation="border" size="sm" /> : '🔄 Refresh'}
+                </button>
+              </div>
+            </Alert>
+          )}
+
           {loading ? (
             <div className={styles.chartLoading}>
-              <div className={styles.loadingSpinner}></div>
+              <Spinner animation="border" variant="primary" />
               <p>Loading chart data...</p>
             </div>
           ) : (
@@ -599,30 +749,32 @@ const ChartWidget = () => {
             </div>
           )}
 
-          {/* Technical Indicators (Placeholder) */}
+          {/* Dynamic Technical Indicators */}
           <div className={styles.technicalIndicators}>
             <h6 className={styles.indicatorsTitle}>Technical Indicators</h6>
             <div className={styles.indicatorsGrid}>
               <div className={styles.indicatorItem}>
                 <span className={styles.indicatorLabel}>RSI (14)</span>
-                <span className={styles.indicatorValue}>52.34</span>
+                <span className={styles.indicatorValue}>{performance?.rsi?.toFixed(1) || '50.0'}</span>
                 <ProgressBar 
-                  now={52.34} 
+                  now={performance?.rsi || 50} 
                   className={styles.indicatorProgress}
-                  variant={52.34 > 70 ? "danger" : 52.34 < 30 ? "success" : "warning"}
+                  variant={performance?.rsi > 70 ? "danger" : performance?.rsi < 30 ? "success" : "warning"}
                 />
               </div>
               <div className={styles.indicatorItem}>
                 <span className={styles.indicatorLabel}>MACD</span>
-                <span className={`${styles.indicatorValue} ${styles.indicatorValuePositive}`}>+2.15</span>
+                <span className={`${styles.indicatorValue} ${performance?.macd >= 0 ? styles.indicatorValuePositive : styles.indicatorValueNegative}`}>
+                  {performance?.macd >= 0 ? '+' : ''}{performance?.macd?.toFixed(2) || '0.00'}
+                </span>
               </div>
               <div className={styles.indicatorItem}>
                 <span className={styles.indicatorLabel}>Volume</span>
-                <span className={styles.indicatorValue}>{(chartData[chartData.length - 1]?.volume / 1000000).toFixed(2)}M</span>
+                <span className={styles.indicatorValue}>{((performance?.volume || 0) / 1000000).toFixed(2)}M</span>
               </div>
               <div className={styles.indicatorItem}>
                 <span className={styles.indicatorLabel}>Volatility</span>
-                <span className={styles.indicatorValue}>12.5%</span>
+                <span className={styles.indicatorValue}>{performance?.volatility?.toFixed(1) || '0.0'}%</span>
               </div>
             </div>
           </div>
@@ -631,10 +783,11 @@ const ChartWidget = () => {
         <Card.Footer className={styles.chartFooter}>
           <div className={styles.footerContent}>
             <small className="text-muted">
-              {currentStock?.name} • {timeframe} View • Paper Trading
+              {currentStock?.name} • {currentStock?.sector} • {timeframe} View • {chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart
             </small>
             <small className="text-muted">
-              Last update: {new Date().toLocaleTimeString()}
+              {lastUpdated ? `Last update: ${formatTimeAgo(lastUpdated)}` : 'Loading...'}
+              {stocks.length > 0 && ` • ${stocks.length} Stocks Available`}
             </small>
           </div>
         </Card.Footer>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Spinner, Alert } from 'react-bootstrap';
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
 import styles from './css/TradingJournal.module.css';
@@ -6,55 +7,17 @@ import styles from './css/TradingJournal.module.css';
 const TradingJournal = () => {
   const [activeTab, setActiveTab] = useState('trades');
   const [showAddTrade, setShowAddTrade] = useState(false);
-
-  // Mock trade data
-  const [trades, setTrades] = useState([
-    {
-      id: 1,
-      symbol: "NTC",
-      type: "Buy",
-      quantity: 50,
-      entryPrice: 800,
-      exitPrice: 850,
-      entryDate: "2024-01-15",
-      exitDate: "2024-01-20",
-      profitLoss: 2500,
-      profitLossPercent: 6.25,
-      notes: "Strong earnings report",
-      status: "Closed",
-      strategy: "Swing Trading"
-    },
-    {
-      id: 2,
-      symbol: "NABIL",
-      type: "Sell",
-      quantity: 25,
-      entryPrice: 1250,
-      exitPrice: 1200,
-      entryDate: "2024-01-18",
-      exitDate: "2024-01-22",
-      profitLoss: -1250,
-      profitLossPercent: -4.0,
-      notes: "Market correction",
-      status: "Closed",
-      strategy: "Momentum"
-    },
-    {
-      id: 3,
-      symbol: "SCB",
-      type: "Buy",
-      quantity: 100,
-      entryPrice: 480,
-      exitPrice: null,
-      entryDate: "2024-01-25",
-      exitDate: null,
-      profitLoss: 600,
-      profitLossPercent: 1.25,
-      notes: "Holding for dividend",
-      status: "Open",
-      strategy: "Dividend Investing"
-    }
-  ]);
+  const [trades, setTrades] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({
+    totalTrades: 0,
+    winningTrades: 0,
+    losingTrades: 0,
+    openTrades: 0,
+    totalProfit: 0,
+    winRate: 0
+  });
 
   const [newTrade, setNewTrade] = useState({
     symbol: "",
@@ -68,14 +31,34 @@ const TradingJournal = () => {
     strategy: "Swing Trading"
   });
 
-  const stats = {
-    totalTrades: trades.length,
-    winningTrades: trades.filter(t => t.profitLoss > 0).length,
-    losingTrades: trades.filter(t => t.profitLoss < 0).length,
-    openTrades: trades.filter(t => t.status === "Open").length,
-    totalProfit: trades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0),
-    winRate: ((trades.filter(t => t.profitLoss > 0).length / trades.filter(t => t.status === "Closed").length) * 100) || 0
+  const fetchJournalData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Please login to view journal');
+
+      const response = await fetch('http://localhost:5000/api/journal/entries', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch journal entries');
+
+      const result = await response.json();
+      if (result.success) {
+        setTrades(result.data.entries);
+        setStats(result.data.stats);
+      }
+    } catch (err) {
+      console.error('Journal fetch error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchJournalData();
+  }, []);
 
   const handleInputChange = (field, value) => {
     setNewTrade(prev => ({
@@ -84,34 +67,64 @@ const TradingJournal = () => {
     }));
   };
 
-  const addTrade = () => {
-    const trade = {
-      ...newTrade,
-      id: trades.length + 1,
-      profitLoss: newTrade.exitPrice ? 
-        (newTrade.type === "Buy" ? 1 : -1) * (newTrade.exitPrice - newTrade.entryPrice) * newTrade.quantity : 0,
-      profitLossPercent: newTrade.exitPrice ? 
-        ((newTrade.exitPrice - newTrade.entryPrice) / newTrade.entryPrice * 100) : 0,
-      status: newTrade.exitPrice ? "Closed" : "Open"
-    };
-    
-    setTrades(prev => [trade, ...prev]);
-    setShowAddTrade(false);
-    setNewTrade({
-      symbol: "",
-      type: "Buy",
-      quantity: 0,
-      entryPrice: 0,
-      exitPrice: 0,
-      entryDate: new Date().toISOString().split('T')[0],
-      exitDate: "",
-      notes: "",
-      strategy: "Swing Trading"
-    });
+  const addTrade = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/journal/entries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newTrade)
+      });
+
+      if (!response.ok) throw new Error('Failed to add trade');
+
+      const result = await response.json();
+      if (result.success) {
+        fetchJournalData(); // Refresh data
+        setShowAddTrade(false);
+        setNewTrade({
+          symbol: "",
+          type: "Buy",
+          quantity: 0,
+          entryPrice: 0,
+          exitPrice: 0,
+          entryDate: new Date().toISOString().split('T')[0],
+          exitDate: "",
+          notes: "",
+          strategy: "Swing Trading"
+        });
+      }
+    } catch (err) {
+      console.error('Add trade error:', err);
+      alert('Failed to add trade: ' + err.message);
+    }
   };
 
-  const deleteTrade = (id) => {
-    setTrades(prev => prev.filter(trade => trade.id !== id));
+  const deleteTrade = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this trade?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/journal/entries/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error('Failed to delete trade');
+
+      const result = await response.json();
+      if (result.success) {
+        setTrades(prev => prev.filter(trade => trade.id !== id));
+        // Optionally refresh stats here
+        fetchJournalData();
+      }
+    } catch (err) {
+      console.error('Delete trade error:', err);
+      alert('Failed to delete trade');
+    }
   };
 
   const getProfitColor = (value) => {
@@ -388,7 +401,7 @@ const TradingJournal = () => {
               <div className={styles.barContainer}>
                 <div 
                   className={`${styles.barFill} ${styles.barWin}`}
-                  style={{ width: `${(stats.winningTrades / stats.totalTrades) * 100}%` }}
+                  style={{ width: `${stats.totalTrades > 0 ? (stats.winningTrades / stats.totalTrades) * 100 : 0}%` }}
                 ></div>
               </div>
               <div className={styles.barValue}>{stats.winningTrades}</div>
@@ -398,7 +411,7 @@ const TradingJournal = () => {
               <div className={styles.barContainer}>
                 <div 
                   className={`${styles.barFill} ${styles.barLoss}`}
-                  style={{ width: `${(stats.losingTrades / stats.totalTrades) * 100}%` }}
+                  style={{ width: `${stats.totalTrades > 0 ? (stats.losingTrades / stats.totalTrades) * 100 : 0}%` }}
                 ></div>
               </div>
               <div className={styles.barValue}>{stats.losingTrades}</div>
@@ -481,58 +494,72 @@ const TradingJournal = () => {
 
             {/* Tab Content */}
             <div className={styles.tabContent}>
-              {activeTab === 'trades' && (
-                <div className={styles.tradesTab}>
-                  <div className={styles.tabHeader}>
-                    <h3>Trade History</h3>
-                    <button 
-                      className={styles.addTradeButton}
-                      onClick={() => setShowAddTrade(true)}
-                    >
-                      ➕ Add Trade
-                    </button>
-                  </div>
+              {loading ? (
+                <div className="text-center w-100 py-5">
+                  <Spinner animation="border" variant="primary" />
+                  <p className="mt-3">Loading journal...</p>
+                </div>
+              ) : error ? (
+                <div className="w-100">
+                  <Alert variant="danger">{error}</Alert>
+                  <button className="btn btn-primary" onClick={fetchJournalData}>Retry</button>
+                </div>
+              ) : (
+                <>
+                  {activeTab === 'trades' && (
+                    <div className={styles.tradesTab}>
+                      <div className={styles.tabHeader}>
+                        <h3>Trade History</h3>
+                        <button 
+                          className={styles.addTradeButton}
+                          onClick={() => setShowAddTrade(true)}
+                        >
+                          ➕ Add Trade
+                        </button>
+                      </div>
 
-                  {showAddTrade ? (
-                    <TradeForm />
-                  ) : (
-                    <TradesList />
+                      {showAddTrade ? (
+                        <TradeForm />
+                      ) : (
+                        <TradesList />
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
 
-              {activeTab === 'analytics' && (
-                <div className={styles.analyticsTab}>
-                  <Analytics />
-                </div>
-              )}
+                  {activeTab === 'analytics' && (
+                    <div className={styles.analyticsTab}>
+                      <Analytics />
+                    </div>
+                  )}
 
-              {activeTab === 'insights' && (
-                <div className={styles.insightsTab}>
-                  <h3>Trading Insights</h3>
-                  <div className={styles.insightsGrid}>
-                    <div className={styles.insightCard}>
-                      <div className={styles.insightIcon}>🎯</div>
-                      <h4>Best Performing Strategy</h4>
-                      <p>Swing Trading with 68% win rate</p>
+                  {activeTab === 'insights' && (
+                    <div className={styles.insightsTab}>
+                      <h3>Trading Insights</h3>
+                      <div className={styles.insightsGrid}>
+                        <div className={styles.insightCard}>
+                          <div className={styles.insightIcon}>🎯</div>
+                          <h4>Best Performing Strategy</h4>
+                          <p>Swing Trading with 68% win rate</p>
+                        </div>
+                        <div className={styles.insightCard}>
+                          <div className={styles.insightIcon}>⚠️</div>
+                          <h4>Area for Improvement</h4>
+                          <p>Reduce emotional trading during market volatility</p>
+                        </div>
+                        <div className={styles.insightCard}>
+                          <div className={styles.insightIcon}>📈</div>
+                          <h4>Consistency Score</h4>
+                          <p>You maintain profits in 3 out of 4 weeks</p>
+                        </div>
+                        <div className={styles.insightCard}>
+                          <div className={styles.insightIcon}>🕒</div>
+                          <h4>Optimal Holding Period</h4>
+                          <p>5-10 day holds yield highest returns</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className={styles.insightCard}>
-                      <div className={styles.insightIcon}>⚠️</div>
-                      <h4>Area for Improvement</h4>
-                      <p>Reduce emotional trading during market volatility</p>
-                    </div>
-                    <div className={styles.insightCard}>
-                      <div className={styles.insightIcon}>📈</div>
-                      <h4>Consistency Score</h4>
-                      <p>You maintain profits in 3 out of 4 weeks</p>
-                    </div>
-                    <div className={styles.insightCard}>
-                      <div className={styles.insightIcon}>🕒</div>
-                      <h4>Optimal Holding Period</h4>
-                      <p>5-10 day holds yield highest returns</p>
-                    </div>
-                  </div>
-                </div>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -95,11 +95,13 @@
   gap: 2rem;
 }
 
-.strategyColumn, .resultsColumn {
+.strategyColumn,
+.resultsColumn {
   min-height: 600px;
 }
 
-.strategyColumn h3, .resultsColumn h3 {
+.strategyColumn h3,
+.resultsColumn h3 {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1f2937;
@@ -133,7 +135,8 @@
   font-size: 0.9rem;
 }
 
-.formGroup input, .formGroup select {
+.formGroup input,
+.formGroup select {
   padding: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -141,7 +144,8 @@
   transition: all 0.2s ease;
 }
 
-.formGroup input:focus, .formGroup select:focus {
+.formGroup input:focus,
+.formGroup select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -221,8 +225,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Results Column */
@@ -430,7 +439,8 @@
   margin-top: 2rem;
 }
 
-.saveButton, .exportButton {
+.saveButton,
+.exportButton {
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 6px;
@@ -521,7 +531,8 @@
   margin-top: 1rem;
 }
 
-.actionButton, .deleteButton {
+.actionButton,
+.deleteButton {
   padding: 0.5rem 1rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -564,17 +575,28 @@
   color: #ef4444 !important;
 }
 
-.performanceExcellent { color: #10b981; }
-.performanceGood { color: #22c55e; }
-.performanceFair { color: #eab308; }
-.performancePoor { color: #ef4444; }
+.performanceExcellent {
+  color: #10b981;
+}
+
+.performanceGood {
+  color: #22c55e;
+}
+
+.performanceFair {
+  color: #eab308;
+}
+
+.performancePoor {
+  color: #ef4444;
+}
 
 /* Responsive Design */
 @media (max-width: 1024px) {
   .dashboardMain {
     margin-left: 4rem;
   }
-  
+
   .tabColumns {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -610,11 +632,13 @@
     border-bottom-color: #e5e7eb;
   }
 
-  .formGrid, .parametersGrid {
+  .formGrid,
+  .parametersGrid {
     grid-template-columns: 1fr;
   }
 
-  .overviewGrid, .metricsGrid {
+  .overviewGrid,
+  .metricsGrid {
     grid-template-columns: 1fr;
   }
 
@@ -622,14 +646,6 @@
     flex-direction: column;
   }
 
-  .strategyStats {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .strategyActions {
-    flex-wrap: wrap;
-  }
 }
 
 /* Dark Theme */
@@ -647,8 +663,51 @@
   color: #f9fafb;
 }
 
-[data-bs-theme="dark"] .header h1 {
+[data-bs-theme="dark"] .header h1,
+[data-bs-theme="dark"] .strategyColumn h3,
+[data-bs-theme="dark"] .resultsColumn h3,
+[data-bs-theme="dark"] .parametersSection h4,
+[data-bs-theme="dark"] .overviewContent h3,
+[data-bs-theme="dark"] .performanceMetrics h3,
+[data-bs-theme="dark"] .monthlyPerformance h3,
+[data-bs-theme="dark"] .strategyHeader h4 {
   color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .header p,
+[data-bs-theme="dark"] .overviewContent p,
+[data-bs-theme="dark"] .metricDescription,
+[data-bs-theme="dark"] .strategyStats,
+[data-bs-theme="dark"] .loadingText,
+[data-bs-theme="dark"] .placeholderState {
+  color: #9ca3af;
+}
+
+[data-bs-theme="dark"] .tabsNav {
+  background: #1f2937;
+  border-bottom-color: #374151;
+}
+
+[data-bs-theme="dark"] .tabButton {
+  color: #9ca3af;
+}
+
+[data-bs-theme="dark"] .tabButton:hover {
+  color: #f9fafb;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .tabButtonActive {
+  color: #60a5fa;
+  border-bottom-color: #60a5fa;
+  background: #1f2937;
+}
+
+[data-bs-theme="dark"] .formGroup label,
+[data-bs-theme="dark"] .parameterGroup label,
+[data-bs-theme="dark"] .metricTitle,
+[data-bs-theme="dark"] .monthName {
+  color: #e5e7eb;
 }
 
 [data-bs-theme="dark"] .formGroup input,
@@ -659,8 +718,16 @@
   color: #f9fafb;
 }
 
+[data-bs-theme="dark"] .formGroup input:focus,
+[data-bs-theme="dark"] .formGroup select:focus,
+[data-bs-theme="dark"] .parameterGroup input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
 [data-bs-theme="dark"] .overviewIcon {
   background: #374151;
+  color: #e5e7eb;
 }
 
 [data-bs-theme="dark"] .barContainer {
@@ -668,6 +735,23 @@
 }
 
 [data-bs-theme="dark"] .chartPlaceholder {
+  background: #1f2937;
+  border-color: #4b5563;
+}
+
+[data-bs-theme="dark"] .actionButton,
+[data-bs-theme="dark"] .deleteButton {
   background: #374151;
   border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+[data-bs-theme="dark"] .actionButton:hover {
+  background: #4b5563;
+}
+
+[data-bs-theme="dark"] .deleteButton:hover {
+  background: #7f1d1d;
+  border-color: #991b1b;
+  color: #fecaca;
 }

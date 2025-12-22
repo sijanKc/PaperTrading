@@ -1,0 +1,274 @@
+/* Global Dark Mode Text Fixes */
+/* Add this to ensure all text is visible in dark mode */
+
+:root {
+    /* Light mode colors */
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --border-color: #e5e7eb;
+}
+
+[data-theme="dark"],
+[data-bs-theme="dark"],
+.dark-theme,
+.dark {
+    /* Dark mode colors */
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-tertiary: #9ca3af;
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --border-color: #374151;
+}
+
+/* Force text visibility in dark mode */
+[data-theme="dark"] *,
+.dark-theme *,
+.dark * {
+    color: var(--text-primary) !important;
+}
+
+/* Preserve specific color classes */
+[data-theme="dark"] .text-success,
+.dark-theme .text-success,
+.dark .text-success,
+[data-theme="dark"] .positive,
+.dark-theme .positive,
+.dark .positive {
+    color: #10b981 !important;
+}
+
+[data-theme="dark"] .text-danger,
+.dark-theme .text-danger,
+.dark .text-danger,
+[data-theme="dark"] .negative,
+.dark-theme .negative,
+.dark .negative {
+    color: #ef4444 !important;
+}
+
+[data-theme="dark"] .text-warning,
+.dark-theme .text-warning,
+.dark .text-warning {
+    color: #f59e0b !important;
+}
+
+[data-theme="dark"] .text-info,
+.dark-theme .text-info,
+.dark .text-info {
+    color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .text-muted,
+.dark-theme .text-muted,
+.dark .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Card and container backgrounds */
+[data-theme="dark"] .card,
+.dark-theme .card,
+.dark .card,
+[data-theme="dark"] [class*="card"],
+.dark-theme [class*="card"],
+.dark [class*="card"] {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Input fields */
+[data-theme="dark"] input,
+.dark-theme input,
+.dark input,
+[data-theme="dark"] select,
+.dark-theme select,
+.dark select,
+[data-theme="dark"] textarea,
+.dark-theme textarea,
+.dark textarea {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+.dark-theme input::placeholder,
+.dark input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+.dark-theme textarea::placeholder,
+.dark textarea::placeholder {
+    color: var(--text-tertiary) !important;
+}
+
+/* Tables */
+[data-theme="dark"] table,
+.dark-theme table,
+.dark table {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] th,
+.dark-theme th,
+.dark th {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] td,
+.dark-theme td,
+.dark td {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Buttons */
+[data-theme="dark"] button:not(.btn-primary):not(.btn-success):not(.btn-danger),
+.dark-theme button:not(.btn-primary):not(.btn-success):not(.btn-danger),
+.dark button:not(.btn-primary):not(.btn-success):not(.btn-danger) {
+    color: var(--text-primary) !important;
+}
+
+/* Links */
+[data-theme="dark"] a,
+.dark-theme a,
+.dark a {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] a:hover,
+.dark-theme a:hover,
+.dark a:hover {
+    color: #93c5fd !important;
+}
+
+/* Headings */
+[data-theme="dark"] h1,
+.dark-theme h1,
+.dark h1,
+[data-theme="dark"] h2,
+.dark-theme h2,
+.dark h2,
+[data-theme="dark"] h3,
+.dark-theme h3,
+.dark h3,
+[data-theme="dark"] h4,
+.dark-theme h4,
+.dark h4,
+[data-theme="dark"] h5,
+.dark-theme h5,
+.dark h5,
+[data-theme="dark"] h6,
+.dark-theme h6,
+.dark h6 {
+    color: var(--text-primary) !important;
+}
+
+/* Labels */
+[data-theme="dark"] label,
+.dark-theme label,
+.dark label {
+    color: var(--text-primary) !important;
+}
+
+/* Badges and Pills */
+[data-theme="dark"] .badge,
+.dark-theme .badge,
+.dark .badge {
+    color: #ffffff !important;
+}
+
+/* Dropdown menus */
+[data-theme="dark"] .dropdown-menu,
+.dark-theme .dropdown-menu,
+.dark .dropdown-menu {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .dropdown-item,
+.dark-theme .dropdown-item,
+.dark .dropdown-item {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+.dark-theme .dropdown-item:hover,
+.dark .dropdown-item:hover {
+    background-color: var(--bg-primary) !important;
+}
+
+/* Modal */
+[data-theme="dark"] .modal-content,
+.dark-theme .modal-content,
+.dark .modal-content {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .modal-header,
+.dark-theme .modal-header,
+.dark .modal-header,
+[data-theme="dark"] .modal-footer,
+.dark-theme .modal-footer,
+.dark .modal-footer {
+    border-color: var(--border-color) !important;
+}
+
+/* Alert boxes */
+[data-theme="dark"] .alert,
+.dark-theme .alert,
+.dark .alert {
+    color: var(--text-primary) !important;
+}
+
+/* Specific component fixes */
+[data-theme="dark"] [class*="stock"],
+.dark-theme [class*="stock"],
+.dark [class*="stock"],
+[data-theme="dark"] [class*="trade"],
+.dark-theme [class*="trade"],
+.dark [class*="trade"],
+[data-theme="dark"] [class*="portfolio"],
+.dark-theme [class*="portfolio"],
+.dark [class*="portfolio"] {
+    color: var(--text-primary) !important;
+}
+
+/* Price displays */
+[data-theme="dark"] [class*="price"],
+.dark-theme [class*="price"],
+.dark [class*="price"] {
+    color: var(--text-primary) !important;
+}
+
+/* Stats and metrics */
+[data-theme="dark"] [class*="stat"],
+.dark-theme [class*="stat"],
+.dark [class*="stat"],
+[data-theme="dark"] [class*="metric"],
+.dark-theme [class*="metric"],
+.dark [class*="metric"] {
+    color: var(--text-primary) !important;
+}
+
+/* Ensure white text on colored backgrounds */
+[data-theme="dark"] .bg-primary,
+.dark-theme .bg-primary,
+.dark .bg-primary,
+[data-theme="dark"] .bg-success,
+.dark-theme .bg-success,
+.dark .bg-success,
+[data-theme="dark"] .bg-danger,
+.dark-theme .bg-danger,
+.dark .bg-danger,
+[data-theme="dark"] .bg-warning,
+.dark-theme .bg-warning,
+.dark .bg-warning,
+[data-theme="dark"] .bg-info,
+.dark-theme .bg-info,
+.dark .bg-info {
+    color: #ffffff !important;
+}

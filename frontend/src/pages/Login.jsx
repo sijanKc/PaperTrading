@@ -12,8 +12,7 @@ import {
   Shield,
   TrendingUp,
   BarChart3,
-  Users,
-  CheckCircle
+  Users
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import "../styles/login.css";
@@ -52,12 +51,40 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Login attempt:", formData);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        console.log("✅ Login successful:", data);
+        
+        // Save token to localStorage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        
+        // Redirect to dashboard
+        window.location.href = "/dashboard";
+        
+      } else {
+        alert(`❌ Login failed: ${data.message || "Invalid credentials"}`);
+        console.error("Login error:", data);
+      }
+    } catch (error) {
+      console.error("Error connecting to backend:", error);
+      alert("⚠️ Server not responding. Please check your backend.");
+    } finally {
       setIsLoading(false);
-      // Add your actual login logic here
-    }, 2000);
+    }
   };
 
   const handleForgotPassword = (e) => {
@@ -274,13 +301,12 @@ const Login = () => {
                     </motion.div>
 
                     <div className="text-center mt-4">
-                      <Button 
-                        variant="link" 
-                        className="forgot-password-link"
-                        onClick={() => setShowForgotPassword(true)}
+                      <Link 
+                        to="/forgot-password" 
+                        className="forgot-password-link text-decoration-none"
                       >
                         Forgot your password?
-                      </Button>
+                      </Link>
                     </div>
 
                     <div className="text-center mt-4 pt-3 border-top border-slate-600">
@@ -300,7 +326,7 @@ const Login = () => {
         </Row>
       </Container>
 
-      {/* Forgot Password Modal */}
+      {/* Forgot Password Modal - Kept for backward compatibility if needed, but link above goes to new page */}
       <AnimatePresence>
         {showForgotPassword && (
           <Modal 
@@ -349,7 +375,7 @@ const Login = () => {
                       whileTap={{ scale: 0.98 }}
                     >
                       <Button type="submit" className="login-btn w-100 py-3">
-                        <Send size={18} className="me-2" />
+                        <Zap size={18} className="me-2" />
                         Send Reset Link
                       </Button>
                     </motion.div>

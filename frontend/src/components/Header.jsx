@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navbar, Nav, Container, Button } from "react-bootstrap";
 import { Link } from "react-router-dom"; 
-import { Zap, Menu, X, TrendingUp, BarChart3, Users } from "lucide-react";
+import { Zap, Menu, X, TrendingUp, BarChart3, Users, Shield } from "lucide-react";
 import "../styles/Header.css";
 import logo from "../assets/logo.png";
 
@@ -73,6 +73,16 @@ const Header = () => {
                 {item.name}
               </Nav.Link>
             ))}
+            
+            <Nav.Link 
+              as={Link} 
+              to="/admin/login" 
+              className="nav-link" 
+              onClick={closeMobileMenu}
+            >
+              <span className="nav-icon"><Shield size={16} /></span>
+              Admin
+            </Nav.Link>
             
             <Link to="/started" onClick={closeMobileMenu}>
               <Button

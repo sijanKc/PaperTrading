@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
 import styles from './css/StrategyTester.module.css';
+import api from '../../services/api';
 
 const StrategyTester = () => {
   const [activeTab, setActiveTab] = useState('backtest');
@@ -20,30 +21,30 @@ const StrategyTester = () => {
 
   const [testResults, setTestResults] = useState(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [savedStrategies, setSavedStrategies] = useState([]);
+  const [isLoadingStrategies, setIsLoadingStrategies] = useState(false);
+  const [error, setError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Mock backtest results
-  const mockResults = {
-    totalTrades: 45,
-    winningTrades: 28,
-    losingTrades: 17,
-    winRate: 62.2,
-    totalReturn: 15600,
-    returnPercent: 15.6,
-    maxDrawdown: -8.2,
-    sharpeRatio: 1.8,
-    profitFactor: 2.1,
-    avgWin: 850,
-    avgLoss: -420,
-    bestTrade: 2100,
-    worstTrade: -680,
-    performance: [
-      { month: 'Jan', return: 2.1 },
-      { month: 'Feb', return: -1.2 },
-      { month: 'Mar', return: 4.8 },
-      { month: 'Apr', return: 3.2 },
-      { month: 'May', return: 5.6 },
-      { month: 'Jun', return: 2.4 }
-    ]
+  useEffect(() => {
+    if (activeTab === 'strategies') {
+      fetchSavedStrategies();
+    }
+  }, [activeTab]);
+
+  const fetchSavedStrategies = async () => {
+    setIsLoadingStrategies(true);
+    try {
+      const response = await api.get('/strategy/user');
+      if (response.data.success) {
+        setSavedStrategies(response.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching strategies:', err);
+      setError('Failed to load strategies');
+    } finally {
+      setIsLoadingStrategies(false);
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -53,13 +54,44 @@ const StrategyTester = () => {
     }));
   };
 
-  const runBacktest = () => {
+  const runBacktest = async () => {
     setIsTesting(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      setTestResults(mockResults);
+    setError(null);
+    setTestResults(null);
+    
+    try {
+      const response = await api.post('/strategy/backtest', strategy);
+      if (response.data.success) {
+        setTestResults(response.data.data);
+      }
+    } catch (err) {
+      console.error('Backtest error:', err);
+      setError(err.response?.data?.message || 'Error running backtest');
+    } finally {
       setIsTesting(false);
-    }, 2000);
+    }
+  };
+
+  const handleSaveStrategy = async () => {
+    if (!testResults) return;
+    
+    try {
+      const response = await api.post('/strategy/save', {
+        ...strategy,
+        results: testResults
+      });
+      
+      if (response.data.success) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+        if (activeTab === 'strategies') {
+          fetchSavedStrategies();
+        }
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+      setError('Failed to save strategy');
+    }
   };
 
   const getProfitColor = (value) => {
@@ -208,6 +240,7 @@ const StrategyTester = () => {
           '🚀 Run Backtest'
         )}
       </button>
+      {error && <div className={styles.errorMessage}>{error}</div>}
     </div>
   );
 
@@ -405,8 +438,11 @@ const StrategyTester = () => {
                           <MonthlyPerformance />
                           
                           <div className={styles.actionButtons}>
-                            <button className={styles.saveButton}>
-                              💾 Save Strategy
+                            <button 
+                              className={styles.saveButton}
+                              onClick={handleSaveStrategy}
+                            >
+                              {saveSuccess ? '✅ Saved!' : '💾 Save Strategy'}
                             </button>
                             <button className={styles.exportButton}>
                               📤 Export Results
@@ -428,43 +464,38 @@ const StrategyTester = () => {
               {activeTab === 'strategies' && (
                 <div className={styles.strategiesTab}>
                   <h3>Saved Strategies</h3>
-                  <div className={styles.strategiesList}>
-                    <div className={styles.strategyItem}>
-                      <div className={styles.strategyHeader}>
-                        <h4>Moving Average Crossover</h4>
-                        <span className={styles.strategyBadge}>Active</span>
-                      </div>
-                      <p>NTC • 1D • Fast MA: 20, Slow MA: 50</p>
-                      <div className={styles.strategyStats}>
-                        <span>Win Rate: 62%</span>
-                        <span>Total Return: 15.6%</span>
-                        <span>Last Test: 2 days ago</span>
-                      </div>
-                      <div className={styles.strategyActions}>
-                        <button className={styles.actionButton}>Test Again</button>
-                        <button className={styles.actionButton}>Edit</button>
-                        <button className={styles.deleteButton}>Delete</button>
-                      </div>
+                  {isLoadingStrategies ? (
+                    <div className={styles.loadingState}>
+                       <div className={styles.loadingSpinner}></div>
+                       <p>Loading strategies...</p>
                     </div>
-
-                    <div className={styles.strategyItem}>
-                      <div className={styles.strategyHeader}>
-                        <h4>RSI Strategy</h4>
-                        <span className={styles.strategyBadge}>Inactive</span>
-                      </div>
-                      <p>NABIL • 1H • RSI: 30/70</p>
-                      <div className={styles.strategyStats}>
-                        <span>Win Rate: 58%</span>
-                        <span>Total Return: 12.3%</span>
-                        <span>Last Test: 1 week ago</span>
-                      </div>
-                      <div className={styles.strategyActions}>
-                        <button className={styles.actionButton}>Test Again</button>
-                        <button className={styles.actionButton}>Edit</button>
-                        <button className={styles.deleteButton}>Delete</button>
-                      </div>
+                  ) : savedStrategies.length > 0 ? (
+                    <div className={styles.strategiesList}>
+                      {savedStrategies.map(strat => (
+                        <div key={strat.id} className={styles.strategyItem}>
+                          <div className={styles.strategyHeader}>
+                            <h4>{strat.name}</h4>
+                            <span className={styles.strategyBadge}>{strat.isActive ? 'Active' : 'Inactive'}</span>
+                          </div>
+                          <p>{strat.symbol} • {strat.timeframe} • Fast MA: {strat.parameters.fastMA}, Slow MA: {strat.parameters.slowMA}</p>
+                          <div className={styles.strategyStats}>
+                            <span>Win Rate: {strat.results?.winRate}%</span>
+                            <span>Total Return: {strat.results?.totalReturn}%</span>
+                            <span>Last Test: {new Date(strat.results?.lastTest || Date.now()).toLocaleDateString()}</span>
+                          </div>
+                          <div className={styles.strategyActions}>
+                            <button className={styles.actionButton}>Test Again</button>
+                            <button className={styles.actionButton}>Edit</button>
+                            <button className={styles.deleteButton}>Delete</button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  ) : (
+                    <div className={styles.placeholderState}>
+                      <p>No saved strategies found.</p>
+                    </div>
+                  )}
                 </div>
               )}
 

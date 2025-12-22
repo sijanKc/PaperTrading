@@ -31,7 +31,8 @@
 .header h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
   margin-bottom: 0.5rem;
 }
 
@@ -200,7 +201,8 @@
 .cardValue {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
   margin-bottom: 0.5rem;
 }
 
@@ -241,7 +243,8 @@
 
 .metricValue {
   font-weight: 600;
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
 }
 
 /* Beta Indicator */
@@ -253,7 +256,8 @@
 .betaValue {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
   margin-bottom: 0.5rem;
 }
 
@@ -342,7 +346,8 @@
   position: relative;
 }
 
-.returnBar, .benchmarkBar {
+.returnBar,
+.benchmarkBar {
   width: 20px;
   border-radius: 4px 4px 0 0;
   transition: all 0.3s ease;
@@ -351,11 +356,13 @@
 }
 
 .returnBar {
-  background: #3b82f6; /* Soft blue */
+  background: #3b82f6;
+  /* Soft blue */
 }
 
 .benchmarkBar {
-  background: #9ca3af; /* Gray for benchmark */
+  background: #9ca3af;
+  /* Gray for benchmark */
 }
 
 .barValue {
@@ -369,7 +376,8 @@
 }
 
 .returnBar .barValue {
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
 }
 
 .benchmarkBar .barValue {
@@ -405,11 +413,13 @@
 }
 
 .portfolioColor {
-  background: #3b82f6; /* Soft blue */
+  background: #3b82f6;
+  /* Soft blue */
 }
 
 .benchmarkColor {
-  background: #9ca3af; /* Gray */
+  background: #9ca3af;
+  /* Gray */
 }
 
 /* Risk Section */
@@ -462,7 +472,8 @@
 
 .riskValue {
   font-weight: 600;
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
 }
 
 /* Drawdowns */
@@ -523,20 +534,6 @@
 
 /* Sector Allocation */
 .sectorAllocation {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.sectorItem {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.sectorHeader {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 
@@ -548,7 +545,8 @@
 
 .sectorPercent {
   font-weight: 600;
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
   font-size: 0.9rem;
 }
 
@@ -590,7 +588,8 @@
 
 .stockSymbol {
   font-weight: 600;
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
   font-size: 0.9rem;
 }
 
@@ -687,7 +686,163 @@
 .metricValue {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3b82f6; /* Soft blue */
+  color: #3b82f6;
+  /* Soft blue */
+  margin-bottom: 0.5rem;
+}
+
+
+.controls {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.timeRangeSelector {
+  flex-direction: column;
+  align-items: stretch;
+  color: #3b82f6;
+  /* Soft blue */
+  font-size: 0.9rem;
+}
+
+.allocationBar {
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.allocationFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Stock Performance */
+.stockPerformance {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stockItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.stockInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stockSymbol {
+  font-weight: 600;
+  color: #3b82f6;
+  /* Soft blue */
+  font-size: 0.9rem;
+}
+
+.stockAllocation {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.stockReturn {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Insights Section */
+.insightsSection {
+  margin-bottom: 2rem;
+}
+
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.insightCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.insightCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.insightIcon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.insightCard h4 {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.insightCard p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Comparison Section */
+.comparisonSection {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.comparisonSection h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1.5rem;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.metricCard {
+  text-align: center;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.metricCard h4 {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.metricValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3b82f6;
+  /* Soft blue */
   margin-bottom: 0.5rem;
 }
 
@@ -698,11 +853,13 @@
 
 /* Text Colors */
 .positive {
-  color: #059669 !important; /* Green */
+  color: #059669 !important;
+  /* Green */
 }
 
 .negative {
-  color: #dc2626 !important; /* Red */
+  color: #dc2626 !important;
+  /* Red */
 }
 
 /* Responsive Design */
@@ -710,12 +867,12 @@
   .dashboardMain {
     margin-left: 4rem;
   }
-  
+
   .riskGrid,
   .allocationGrid {
     grid-template-columns: 1fr;
   }
-  
+
   .performanceStats {
     justify-content: flex-start;
   }
@@ -780,7 +937,8 @@
     gap: 0.1rem;
   }
 
-  .returnBar, .benchmarkBar {
+  .returnBar,
+  .benchmarkBar {
     width: 15px;
   }
 
@@ -790,27 +948,142 @@
 }
 
 /* Dark Theme */
-[data-bs-theme="dark"] .dashboardContainer {
+[data-bs-theme="dark"] .dashboardContainer,
+:global([data-theme="dark"]) .dashboardContainer,
+:global(.dark) .dashboardContainer {
   background-color: #111827;
 }
 
 [data-bs-theme="dark"] .tabsContainer,
+:global([data-theme="dark"]) .tabsContainer,
+:global(.dark) .tabsContainer,
 [data-bs-theme="dark"] .overviewCard,
+:global([data-theme="dark"]) .overviewCard,
+:global(.dark) .overviewCard,
 [data-bs-theme="dark"] .performanceSection,
+:global([data-theme="dark"]) .performanceSection,
+:global(.dark) .performanceSection,
 [data-bs-theme="dark"] .riskCard,
+:global([data-theme="dark"]) .riskCard,
+:global(.dark) .riskCard,
 [data-bs-theme="dark"] .allocationCard,
+:global([data-theme="dark"]) .allocationCard,
+:global(.dark) .allocationCard,
 [data-bs-theme="dark"] .insightCard,
-[data-bs-theme="dark"] .comparisonSection {
+:global([data-theme="dark"]) .insightCard,
+:global(.dark) .insightCard,
+[data-bs-theme="dark"] .comparisonSection,
+:global([data-theme="dark"]) .comparisonSection,
+:global(.dark) .comparisonSection {
   background: #1f2937;
   border-color: #374151;
   color: #f9fafb;
 }
 
-[data-bs-theme="dark"] .header h1 {
-  color: #60a5fa;
+[data-bs-theme="dark"] .header h1,
+:global([data-theme="dark"]) .header h1,
+:global(.dark) .header h1 {
+  color: #f9fafb;
 }
 
-[data-bs-theme="dark"] .metricCard {
+[data-bs-theme="dark"] .timeRangeButtons,
+:global([data-theme="dark"]) .timeRangeButtons,
+:global(.dark) .timeRangeButtons,
+[data-bs-theme="dark"] .tabsNav,
+:global([data-theme="dark"]) .tabsNav,
+:global(.dark) .tabsNav {
   background: #374151;
   border-color: #4b5563;
+}
+
+[data-bs-theme="dark"] .rangeButton,
+:global([data-theme="dark"]) .rangeButton,
+:global(.dark) .rangeButton,
+[data-bs-theme="dark"] .tabButton,
+:global([data-theme="dark"]) .tabButton,
+:global(.dark) .tabButton {
+  color: #d1d5db;
+}
+
+[data-bs-theme="dark"] .rangeButton:hover,
+:global([data-theme="dark"]) .rangeButton:hover,
+:global(.dark) .rangeButton:hover,
+[data-bs-theme="dark"] .tabButton:hover,
+:global([data-theme="dark"]) .tabButton:hover,
+:global(.dark) .tabButton:hover {
+  background: #4b5563;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .exportButton,
+:global([data-theme="dark"]) .exportButton,
+:global(.dark) .exportButton {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .metricItem,
+:global([data-theme="dark"]) .metricItem,
+:global(.dark) .metricItem,
+[data-bs-theme="dark"] .riskMetric,
+:global([data-theme="dark"]) .riskMetric,
+:global(.dark) .riskMetric {
+  border-color: #374151;
+}
+
+[data-bs-theme="dark"] .drawdownItem,
+:global([data-theme="dark"]) .drawdownItem,
+:global(.dark) .drawdownItem,
+[data-bs-theme="dark"] .stockItem,
+:global([data-theme="dark"]) .stockItem,
+:global(.dark) .stockItem,
+[data-bs-theme="dark"] .metricCard,
+:global([data-theme="dark"]) .metricCard,
+:global(.dark) .metricCard {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .cardHeader h3,
+:global([data-theme="dark"]) .cardHeader h3,
+:global(.dark) .cardHeader h3,
+[data-bs-theme="dark"] .betaLabel,
+:global([data-theme="dark"]) .betaLabel,
+:global(.dark) .betaLabel,
+[data-bs-theme="dark"] .sectionHeader h3,
+:global([data-theme="dark"]) .sectionHeader h3,
+:global(.dark) .sectionHeader h3,
+[data-bs-theme="dark"] .riskCard h4,
+:global([data-theme="dark"]) .riskCard h4,
+:global(.dark) .riskCard h4,
+[data-bs-theme="dark"] .allocationCard h4,
+:global([data-theme="dark"]) .allocationCard h4,
+:global(.dark) .allocationCard h4,
+[data-bs-theme="dark"] .insightCard h4,
+:global([data-theme="dark"]) .insightCard h4,
+:global(.dark) .insightCard h4,
+[data-bs-theme="dark"] .comparisonSection h3,
+:global([data-theme="dark"]) .comparisonSection h3,
+:global(.dark) .comparisonSection h3,
+[data-bs-theme="dark"] .metricCard h4,
+:global([data-theme="dark"]) .metricCard h4,
+:global(.dark) .metricCard h4 {
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .selectorLabel,
+:global([data-theme="dark"]) .selectorLabel,
+:global(.dark) .selectorLabel,
+[data-bs-theme="dark"] .legendItem,
+:global([data-theme="dark"]) .legendItem,
+:global(.dark) .legendItem,
+[data-bs-theme="dark"] .drawdownPeriod,
+:global([data-theme="dark"]) .drawdownPeriod,
+:global(.dark) .drawdownPeriod,
+[data-bs-theme="dark"] .sectorName,
+:global([data-theme="dark"]) .sectorName,
+:global(.dark) .sectorName {
+  color: #d1d5db;
 }
