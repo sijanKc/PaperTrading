@@ -112,18 +112,20 @@ const Sidebar = () => {
 
       {/* User Profile Section */}
       <div className={styles.sidebarFooter}>
-        <div className={styles.userProfile}>
-          <div className={styles.userAvatar}>👤</div>
-          {open && (
-            <div className={styles.userInfo}>
-              <div className={styles.userName}>Trader User</div>
-              <div className={styles.userStatus}>
-                <span className={`${styles.statusDot} ${styles.online}`}></span>
-                Paper Trading
-              </div>
+        <Nav.Link as={Link} to="/profile" className={`p-0 text-decoration-none ${styles.profileLink}`}>
+            <div className={`${styles.userProfile} ${isActive('/profile') ? styles.activeProfile : ''}`}>
+            <div className={styles.userAvatar}>👤</div>
+            {open && (
+                <div className={styles.userInfo}>
+                <div className={styles.userName}>Trader User</div>
+                <div className={styles.userStatus}>
+                    <span className={`${styles.statusDot} ${styles.online}`}></span>
+                    Paper Trading
+                </div>
+                </div>
+            )}
             </div>
-          )}
-        </div>
+        </Nav.Link>
       </div>
     </div>
   );

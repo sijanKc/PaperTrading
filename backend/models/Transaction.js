@@ -40,6 +40,9 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     enum: ['PENDING', 'COMPLETED', 'FAILED'],
     default: 'COMPLETED'
+  },
+  note: {
+    type: String  // For stop-loss, circuit breaker, etc.
   }
 }, {
   timestamps: true

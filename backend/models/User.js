@@ -109,7 +109,19 @@ const userSchema = new mongoose.Schema({
   // Trading Information
   virtualBalance: {
     type: Number,
-    default: 100000  // 1 lakh NPR starting balance
+    default: 100000
+  },
+  initialBalance: {
+    type: Number,
+    default: 100000 // Set when user first registers
+  },
+  dailyStartBalance: {
+    type: Number,
+    default: 100000 // Reset daily to track daily loss
+  },
+  dailyStartDate: {
+    type: Date,
+    default: Date.now // Last time dailyStartBalance was reset
   },
   portfolioValue: {
     type: Number,
@@ -120,39 +132,32 @@ const userSchema = new mongoose.Schema({
     default: 0
   },
 
-  // Email Verification & OTP
-  emailVerified: {
+  // Account Verification (Activation Link)
+  isVerified: {
     type: Boolean,
-    default: false
+    default: false  // User cannot login until activated
   },
-  emailVerificationOTP: {
+  activationToken: {
     type: String
   },
-  emailVerificationOTPExpires: {
-    type: Date
-  },
-  passwordResetOTP: {
-    type: String
-  },
-  passwordResetOTPExpires: {
-    type: Date
-  },
-  otpAttempts: {
-    type: Number,
-    default: 0
-  },
-  lastOTPRequest: {
+  activationTokenExpires: {
     type: Date
   },
 
-  // Timestamps
+  // Admin Approval
+  approved: {
+    type: Boolean,
+    default: false  // User cannot access dashboard until approved by admin
+  },
+
+  // Timestamps & Role
   createdAt: {
     type: Date,
     default: Date.now
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true  // For admin ban/suspend
   },
   role: {
     type: String,
@@ -161,7 +166,6 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Create model from schema
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

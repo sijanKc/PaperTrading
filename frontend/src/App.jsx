@@ -19,6 +19,7 @@ import Analytics from "./pages/dashboard/Analytics";
 import Feedback from "./pages/dashboard/Feedback";
 import HelpAndSupport from "./pages/dashboard/HelpAndSupport";
 import Settings from "./pages/dashboard/Settings";
+import Profile from "./pages/dashboard/Profile";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRoute from "./components/admin/AdminRoute";
@@ -54,6 +55,7 @@ function App() {
         <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
         <Route path="/help" element={<ProtectedRoute><HelpAndSupport /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />

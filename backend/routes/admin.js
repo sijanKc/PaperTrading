@@ -11,7 +11,12 @@ router.get('/stats', adminController.getDashboardStats);
 
 // User Management
 router.get('/users', adminController.getUsers);
+router.post('/users/:id/approve', adminController.approveUser); // New approval route
 router.put('/users/:id/status', adminController.updateUserStatus);
 router.delete('/users/:id', adminController.deleteUser);
+
+// Trading Rules Management
+router.get('/trading-rules', adminController.getTradingRules);
+router.put('/trading-rules', adminController.updateTradingRules);
 
 module.exports = router;

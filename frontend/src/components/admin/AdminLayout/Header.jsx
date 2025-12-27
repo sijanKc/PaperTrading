@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from '../../admincss/Header.module.css';
 
 const Header = ({ 
   sidebarOpen, 
   onToggleSidebar, 
-  activeTab 
+  activeTab,
+  onTabChange
 }) => {
+  const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -27,7 +30,8 @@ const Header = ({
     competitions: 'Competition Management',
     monitoring: 'System Monitoring',
     reports: 'Reports & Analytics',
-    settings: 'System Settings'
+    settings: 'System Settings',
+    profile: 'My Profile'
   };
 
   const notifications = [
@@ -191,31 +195,27 @@ const Header = ({
                 
                 <div className={styles.dropdownDivider}></div>
                 
-                <button className={styles.dropdownItem}>
+                <button 
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    onTabChange('profile');
+                    setUserMenuOpen(false);
+                  }}
+                >
                   <span className={styles.itemIcon}>👤</span>
                   <span>My Profile</span>
                 </button>
                 
-                <button className={styles.dropdownItem}>
-                  <span className={styles.itemIcon}>⚙️</span>
-                  <span>Account Settings</span>
-                </button>
-                
-                <button className={styles.dropdownItem}>
-                  <span className={styles.itemIcon}>🔒</span>
-                  <span>Privacy & Security</span>
-                </button>
-                
                 <div className={styles.dropdownDivider}></div>
                 
-                <button className={styles.dropdownItem}>
-                  <span className={styles.itemIcon}>❓</span>
-                  <span>Help & Support</span>
-                </button>
-                
-                <div className={styles.dropdownDivider}></div>
-                
-                <button className={`${styles.dropdownItem} ${styles.logout}`}>
+                <button 
+                  className={`${styles.dropdownItem} ${styles.logout}`}
+                  onClick={() => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('user');
+                      navigate('/login');
+                  }}
+                >
                   <span className={styles.itemIcon}>🚪</span>
                   <span>Logout</span>
                 </button>

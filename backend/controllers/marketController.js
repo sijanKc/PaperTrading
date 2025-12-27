@@ -3,8 +3,8 @@ const Stock = require('../models/Stock');
 // ✅ Get All Stocks
 const getAllStocks = async (req, res) => {
   try {
-    const stocks = await Stock.find().sort({ symbol: 1 });
-    
+    const stocks = await Stock.find({ isActive: true }).sort({ symbol: 1 });
+
     res.status(200).json({
       success: true,
       count: stocks.length,
@@ -23,9 +23,9 @@ const getAllStocks = async (req, res) => {
 const getStockData = async (req, res) => {
   try {
     const { symbol } = req.params;
-    
+
     const stock = await Stock.findOne({ symbol: symbol.toUpperCase() });
-    
+
     if (!stock) {
       return res.status(404).json({
         success: false,
@@ -56,7 +56,7 @@ const getChartData = async (req, res) => {
 
     // Stock khojne
     const stock = await Stock.findOne({ symbol: symbol.toUpperCase() });
-    
+
     if (!stock) {
       return res.status(404).json({
         success: false,
@@ -66,7 +66,7 @@ const getChartData = async (req, res) => {
 
     // Real stock data bata chart data generate garne
     const chartData = await generateChartDataFromStock(timeframe, stock);
-    
+
     res.json({
       success: true,
       symbol: stock.symbol,
@@ -88,7 +88,7 @@ const getChartData = async (req, res) => {
 const generateChartDataFromStock = async (timeframe, stock) => {
   const data = [];
   const now = new Date();
-  
+
   let points = 78;
   let timeMultiplier = 1;
 
@@ -117,7 +117,7 @@ const generateChartDataFromStock = async (timeframe, stock) => {
 
   const basePrice = stock.currentPrice;
   const volatility = stock.volatility || 0.02;
-  
+
   let currentPrice = basePrice;
 
   // Market trend based on stock performance
@@ -129,13 +129,13 @@ const generateChartDataFromStock = async (timeframe, stock) => {
 
   for (let i = points - 1; i >= 0; i--) {
     const time = new Date(now.getTime() - i * (timeMultiplier * 60 * 60 * 1000) / points);
-    
+
     // Realistic price movement with trend
     const open = currentPrice;
     const randomChange = (Math.random() - 0.5) * 2 * volatility * currentPrice;
     const trendChange = marketTrend * currentPrice * (i / points);
     const totalChange = randomChange + trendChange;
-    
+
     const high = open + Math.abs(totalChange) * (0.5 + Math.random() * 0.5);
     const low = open - Math.abs(totalChange) * (0.5 + Math.random() * 0.5);
     const close = open + totalChange;
@@ -149,7 +149,7 @@ const generateChartDataFromStock = async (timeframe, stock) => {
     // Realistic volume based on timeframe and price movement
     let volume = 0;
     const priceMovement = Math.abs(totalChange) / open;
-    
+
     if (timeframe === '1D') {
       // Market hours (11 AM - 3 PM) ma high volume
       const hour = time.getHours();

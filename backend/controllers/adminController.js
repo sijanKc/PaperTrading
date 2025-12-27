@@ -1,12 +1,14 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const TradingRule = require('../models/TradingRule');
 
 // Get Dashboard Statistics
 const getDashboardStats = async (req, res) => {
     try {
         // User Stats
         const totalUsers = await User.countDocuments();
-        const activeUsers = await User.countDocuments({ status: 'active', role: 'user' });
+        const activeUsers = await User.countDocuments({ isActive: true, role: 'user', approved: true });
+        const pendingApprovals = await User.countDocuments({ approved: false, isVerified: true });
         const premiumUsers = await User.countDocuments({ role: 'premium' });
 
         // Trading Stats
@@ -28,6 +30,7 @@ const getDashboardStats = async (req, res) => {
                 users: {
                     total: totalUsers,
                     active: activeUsers,
+                    pending: pendingApprovals,
                     premium: premiumUsers,
                     newToday: await User.countDocuments({
                         createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
@@ -57,13 +60,19 @@ const getUsers = async (req, res) => {
         if (search) {
             query.$or = [
                 { fullName: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } },
+                { 'contact.email': { $regex: search, $options: 'i' } },
                 { username: { $regex: search, $options: 'i' } }
             ];
         }
 
         // Filters
-        if (status && status !== 'all') query.status = status;
+        if (status && status !== 'all') {
+            if (status === 'pending') {
+                query.approved = false;
+            } else {
+                query.isActive = status === 'active';
+            }
+        }
         if (role && role !== 'all') query.role = role;
 
         // Execute Query
@@ -81,14 +90,8 @@ const getUsers = async (req, res) => {
             name: user.fullName,
             email: user.contact.email, // Access nested email
             phone: user.contact.mobile, // Access nested mobile
-            status: user.isActive ? 'active' : 'suspended', // Map isActive to status string if needed, or use status field if you add one to model. 
-            // Note: User model has isActive (Boolean) but frontend expects 'active', 'suspended', 'banned'. 
-            // We should probably rely on a 'status' field if we add one, or derive it.
-            // For now, let's assume we might need to add a status field to the User model schema explicitly if we want 'banned' etc., 
-            // OR we interpret isActive=false as 'suspended'. 
-            // Let's check User model again... 
-            // User model has `isActive` boolean. Frontend has status='active'|'suspended'|'banned'.
-            // We'll stick to isActive for now, mapped to active/suspended.
+            status: !user.approved ? 'pending' : (user.isActive ? 'active' : 'suspended'), // Include pending for approval
+            approved: user.approved,
             role: user.role,
             portfolioValue: user.portfolioValue,
             totalTrades: 0, // Need to aggregate trades count for accuracy, mock 0 for list speed or do secondary query
@@ -113,7 +116,41 @@ const getUsers = async (req, res) => {
     }
 };
 
-// Update User Status (Suspend/Ban/Activate)
+// Approve User (New function for admin approval)
+const approveUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { approve } = req.body; // true to approve, false to reject/unapprove
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.role === 'admin') {
+            return res.status(400).json({ success: false, message: 'Cannot approve admin accounts' });
+        }
+
+        user.approved = approve !== false; // Default to true if not specified
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: `User ${user.approved ? 'approved' : 'unapproved'} successfully`,
+            user: {
+                id: user._id,
+                username: user.username,
+                approved: user.approved
+            }
+        });
+    } catch (error) {
+        console.error('Approve user error:', error);
+        res.status(500).json({ success: false, message: 'Failed to approve user' });
+    }
+};
+
+// Update User Status (Suspend/Ban/Activate) - Existing, unchanged but now separate from approval
 const updateUserStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -173,9 +210,72 @@ const deleteUser = async (req, res) => {
     }
 };
 
+// Get Trading Rules
+const getTradingRules = async (req, res) => {
+    try {
+        // Find the trading rules document (there should only be one)
+        let rules = await TradingRule.findOne();
+
+        // If no rules exist, create default ones
+        if (!rules) {
+            rules = new TradingRule({});
+            await rules.save();
+        }
+
+        res.json({
+            success: true,
+            rules
+        });
+    } catch (error) {
+        console.error('Get trading rules error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch trading rules'
+        });
+    }
+};
+
+// Update Trading Rules
+const updateTradingRules = async (req, res) => {
+    try {
+        const updatedRules = req.body;
+        const adminId = req.user._id;
+
+        // Find existing rules or create new
+        let rules = await TradingRule.findOne();
+
+        if (!rules) {
+            rules = new TradingRule(updatedRules);
+        } else {
+            // Update all fields
+            Object.keys(updatedRules).forEach(key => {
+                rules[key] = updatedRules[key];
+            });
+        }
+
+        rules.lastUpdatedBy = adminId;
+        await rules.save();
+
+        res.json({
+            success: true,
+            message: 'Trading rules updated successfully',
+            rules
+        });
+    } catch (error) {
+        console.error('Update trading rules error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update trading rules'
+        });
+    }
+};
+
 module.exports = {
     getDashboardStats,
     getUsers,
+    approveUser,
     updateUserStatus,
-    deleteUser
+    deleteUser,
+    getTradingRules,
+    updateTradingRules
 };

@@ -46,6 +46,9 @@ const orderSchema = new mongoose.Schema({
   },
   executedAt: {
     type: Date
+  },
+  note: {
+    type: String  // For stop-loss, circuit breaker, etc.
   }
 }, {
   timestamps: true

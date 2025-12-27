@@ -3,6 +3,7 @@ const Stock = require('../models/Stock');
 const Portfolio = require('../models/Portfolio');
 const Transaction = require('../models/Transaction');
 const Order = require('../models/Order');
+const { validateTrade } = require('../utils/ruleValidator');
 
 // Buy Stock
 const buyStock = async (req, res) => {
@@ -36,6 +37,23 @@ const buyStock = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Minimum quantity is 1 share'
+      });
+    }
+
+    // Validate against trading rules
+    const validation = await validateTrade({
+      userId,
+      type: 'BUY',
+      quantity,
+      price: stock.currentPrice,
+      stock,
+      userBalance: user.virtualBalance
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: validation.error
       });
     }
 
@@ -138,7 +156,7 @@ const sellStock = async (req, res) => {
 
     // Find portfolio entry
     const portfolio = await Portfolio.findOne({ userId, stockId: stock._id });
-    
+
     if (!portfolio || portfolio.quantity < quantity) {
       return res.status(400).json({
         success: false,
@@ -149,9 +167,26 @@ const sellStock = async (req, res) => {
     const totalAmount = quantity * stock.currentPrice;
     const user = await User.findById(userId);
 
+    // Validate against trading rules
+    const validation = await validateTrade({
+      userId,
+      type: 'SELL',
+      quantity,
+      price: stock.currentPrice,
+      stock,
+      userBalance: user.virtualBalance
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: validation.error
+      });
+    }
+
     // Update portfolio
     const newQuantity = portfolio.quantity - quantity;
-    
+
     if (newQuantity === 0) {
       // Remove portfolio entry if no shares left
       await Portfolio.findByIdAndDelete(portfolio._id);
@@ -255,7 +290,7 @@ const getPortfolio = async (req, res) => {
     });
 
     const totalProfitLoss = totalPortfolioValue - totalInvestment;
-    const totalProfitLossPercentage = totalInvestment > 0 ? 
+    const totalProfitLossPercentage = totalInvestment > 0 ?
       (totalProfitLoss / totalInvestment) * 100 : 0;
 
     // Update user's portfolio value

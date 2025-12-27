@@ -76,7 +76,14 @@ const Login = () => {
         window.location.href = "/dashboard";
         
       } else {
-        alert(`❌ Login failed: ${data.message || "Invalid credentials"}`);
+        // Handle specific error messages
+        if (res.status === 403 && data.message.includes("approval")) {
+          alert("⏳ Account Pending: Your account is waiting for admin approval. Please contact support or wait for verification.");
+        } else if (res.status === 403 && data.message.includes("activate")) {
+          alert("📧 Email not verified. Please check your inbox.");
+        } else {
+          alert(`❌ Login failed: ${data.message || "Invalid credentials"}`);
+        }
         console.error("Login error:", data);
       }
     } catch (error) {

@@ -53,7 +53,8 @@ const seedAdmin = async () => {
             username: adminUsername,
             password: hashedPassword,
             role: 'admin',
-            emailVerified: true,
+            isVerified: true,
+            approved: true, // Auto-approve admin
             agreements: {
                 confirmInfo: true,
                 confirmPaperTrading: true

@@ -232,10 +232,12 @@ const Signup = () => {
       const data = await res.json();
 
       if (res.ok) {
-        alert("🎉 Registration successful! Welcome to Sanchaya Paper Trading!");
+        alert("🎉 Registration successful! Your account is pending admin approval. You will be able to login once an admin approves your request.");
         console.log("✅ Server Response:", data);
-        // Optionally redirect to login page:
-         window.location.href = "/started";
+        // Redirect to login after a delay so they can read the alert
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1000);
       } else {
         alert(`❌ Registration failed: ${data.message || "Something went wrong"}`);
         console.error("Error:", data);

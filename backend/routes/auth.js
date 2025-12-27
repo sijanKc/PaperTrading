@@ -1,54 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const {
-    signup,
-    login,
-    sendRegistrationOTP,
-    verifyOTPAndRegister,
-    createTempUserForOTP,
-    forgotPassword,
-    resetPassword,
-    resendOTP
-} = require('../controllers/authController');
+const { register, login, activateAccount } = require('../controllers/authController');
 
-// @route   POST /api/auth/register
-// @desc    Register new user (original - backward compatibility)
-// @access  Public
-router.post('/register', signup);
+// Register → sends activation email
+router.post('/register', register);
 
-// @route   POST /api/auth/login
-// @desc    Login user  
-// @access  Public
+// Activate account via link
+router.get('/activate/:token', activateAccount);
+
+// Login
 router.post('/login', login);
 
-// @route   POST /api/auth/send-registration-otp
-// @desc    Send OTP for email verification during registration
-// @access  Public
-router.post('/send-registration-otp', sendRegistrationOTP);
+const authMiddleware = require('../middleware/auth');
 
-// @route   POST /api/auth/create-temp-user
-// @desc    Create temporary user entry for OTP
-// @access  Public
-router.post('/create-temp-user', createTempUserForOTP);
+// ... existing routes ...
 
-// @route   POST /api/auth/verify-otp
-// @desc    Verify OTP and complete registration
-// @access  Public
-router.post('/verify-otp', verifyOTPAndRegister);
+// Direct Forgot Password Flow
+const { checkEmail, resetPasswordDirect, getProfile, updateProfile } = require('../controllers/authController');
+router.post('/check-email', checkEmail);
+router.post('/reset-password-direct', resetPasswordDirect);
 
-// @route   POST /api/auth/forgot-password
-// @desc    Send OTP for password reset
-// @access  Public
-router.post('/forgot-password', forgotPassword);
-
-// @route   POST /api/auth/reset-password
-// @desc    Verify OTP and reset password
-// @access  Public
-router.post('/reset-password', resetPassword);
-
-// @route   POST /api/auth/resend-otp
-// @desc    Resend OTP (registration or password reset)
-// @access  Public
-router.post('/resend-otp', resendOTP);
+// Profile Routes
+router.get('/profile', authMiddleware, getProfile);
+router.put('/profile', authMiddleware, updateProfile);
 
 module.exports = router;

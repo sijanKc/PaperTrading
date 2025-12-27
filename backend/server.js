@@ -85,7 +85,7 @@ app.get('/', (req, res) => {
     status: 'Active',
     version: '2.0',
     features: [
-      'User Authentication',
+      'User Authentication with Admin Approval',
       'Real-time Stock Trading',
       'Portfolio Management',
       'Live Market Data',
@@ -116,7 +116,8 @@ app.get('/api/health', (req, res) => {
       'Leaderboard: /api/leaderboard',
       'Strategy: /api/strategy',
       'Journal: /api/journal',
-      'Stats: /api/stats'
+      'Stats: /api/stats',
+      'Admin: /api/admin (with approval endpoints)'
     ]
   });
 });
@@ -138,8 +139,14 @@ app.get('/api/docs', (req, res) => {
     version: "2.0",
     endpoints: {
       auth: {
-        "POST /api/auth/register": "Register new user",
-        "POST /api/auth/login": "Login user"
+        "POST /api/auth/register": "Register new user (sets approved: false)",
+        "POST /api/auth/login": "Login user (checks approved)"
+      },
+      admin: {
+        "GET /api/admin/stats": "Get admin dashboard stats (includes pending approvals)",
+        "GET /api/admin/users": "Get users list (filter by pending)",
+        "POST /api/admin/users/:id/approve": "Approve/reject user",
+        "PUT /api/admin/users/:id/status": "Update user status (active/suspended)"
       },
       market: {
         "GET /api/market/stocks": "Get all stocks for MarketList",
@@ -201,6 +208,13 @@ app.use((req, res) => {
       // Auth Routes
       'POST /api/auth/register',
       'POST /api/auth/login',
+
+      // Admin Routes
+      'GET /api/admin/stats',
+      'GET /api/admin/users',
+      'POST /api/admin/users/:id/approve',
+      'PUT /api/admin/users/:id/status',
+      'DELETE /api/admin/users/:id',
 
       // Portfolio Routes
       'GET /api/portfolio/overview',
@@ -276,6 +290,7 @@ const server = app.listen(PORT, () => {
   console.log(`🔬 Strategy API: http://localhost:${PORT}/api/strategy`);
   console.log(`📓 Journal API: http://localhost:${PORT}/api/journal`);
   console.log(`📊 Stats API: http://localhost:${PORT}/api/stats`);
+  console.log(`👑 Admin API: http://localhost:${PORT}/api/admin (with user approval)`);
   console.log(`📚 API Docs: http://localhost:${PORT}/api/docs`);
 });
 
@@ -296,10 +311,51 @@ const priceUpdateInterval = setInterval(() => {
   priceSimulator.updateAllPrices();
 }, UPDATE_INTERVAL);
 
+// ==================== BACKGROUND MONITORING SERVICES ====================
+const stopLossMonitor = require('./services/stopLossMonitor');
+const priceMonitor = require('./services/priceMonitor');
+
+// Stop-Loss Monitoring (runs every minute during market hours)
+const STOP_LOSS_INTERVAL = 60 * 1000; // 1 minute
+const stopLossInterval = setInterval(async () => {
+  try {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMinute; // minutes since midnight
+
+    // NEPSE market hours: 9:15 AM to 3:30 PM (555 to 930 minutes)
+    const marketOpen = 9 * 60 + 15;  // 555 minutes
+    const marketClose = 15 * 60 + 30; // 930 minutes
+
+    if (currentTime >= marketOpen && currentTime <= marketClose) {
+      await stopLossMonitor.checkStopLoss();
+    }
+  } catch (error) {
+    console.error('❌ Stop-loss monitor error:', error);
+  }
+}, STOP_LOSS_INTERVAL);
+
+// Circuit Breaker Cleanup (runs every minute to resume paused stocks)
+const CLEANUP_INTERVAL = 60 * 1000; // 1 minute
+const cleanupInterval = setInterval(async () => {
+  try {
+    await priceMonitor.cleanupExpiredBreakers();
+  } catch (error) {
+    console.error('❌ Circuit breaker cleanup error:', error);
+  }
+}, CLEANUP_INTERVAL);
+
+console.log('✅ Background monitoring services started:');
+console.log('   🛑 Stop-loss monitor: Every 1 minute (during market hours)');
+console.log('   ⏸️  Circuit breaker cleanup: Every 1 minute');
+
 // ==================== GRACEFUL SHUTDOWN ====================
 process.on('SIGTERM', () => {
   console.log('🛑 SIGTERM received, shutting down gracefully...');
   clearInterval(priceUpdateInterval);
+  clearInterval(stopLossInterval);
+  clearInterval(cleanupInterval);
   server.close(() => {
     console.log('✅ Server closed');
     mongoose.connection.close(false, () => {
@@ -312,6 +368,8 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   console.log('🛑 SIGINT received, shutting down gracefully...');
   clearInterval(priceUpdateInterval);
+  clearInterval(stopLossInterval);
+  clearInterval(cleanupInterval);
   server.close(() => {
     console.log('✅ Server closed');
     mongoose.connection.close(false, () => {

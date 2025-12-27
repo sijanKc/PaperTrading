@@ -25,6 +25,7 @@ const AdminLayout = ({ children, activeTab, onTabChange }) => {
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           activeTab={activeTab}
+          onTabChange={onTabChange}
         />
 
         {/* Content Area */}

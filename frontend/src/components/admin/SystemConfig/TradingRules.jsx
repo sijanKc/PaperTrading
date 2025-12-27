@@ -62,12 +62,23 @@ const TradingRules = () => {
   const fetchTradingRules = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/admin/trading-rules', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.rules) {
+        setRules(data.rules);
+      } else {
+        console.error('Failed to fetch trading rules:', data.message);
+      }
     } catch (error) {
       console.error('Error fetching trading rules:', error);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -94,15 +105,28 @@ const TradingRules = () => {
   const handleSaveRules = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Saving rules:', rules);
-        setIsLoading(false);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/admin/trading-rules', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(rules)
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
         setHasChanges(false);
-        alert('Trading rules updated successfully!');
-      }, 1500);
+        alert('Trading rules updated successfully! ✅');
+      } else {
+        alert('Failed to update trading rules: ' + (data.message || 'Unknown error'));
+      }
     } catch (error) {
       console.error('Error saving rules:', error);
+      alert('Error saving trading rules. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

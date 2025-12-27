@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from '../../admincss/MarketData.module.css';
 
 const MarketData = () => {
+  const formRef = useRef(null);
   // Market Data State
   const [stocks, setStocks] = useState([
     {
@@ -93,7 +94,7 @@ const MarketData = () => {
 
   // API Configuration
   const [apiConfig, setApiConfig] = useState({
-    dataSource: 'NEPSE API',
+    dataSource: 'Manual', // Default to Manual Entry
     refreshInterval: 5000,
     autoRefresh: true,
     fallbackEnabled: true,
@@ -113,12 +114,34 @@ const MarketData = () => {
   const fetchStocksData = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/stocks/admin/all', {
+          headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+          // Normalize data for UI if needed
+          const formattedStocks = data.stocks.map(s => ({
+              id: s._id, // map _id to id
+              symbol: s.symbol,
+              name: s.name,
+              sector: s.sector,
+              currentPrice: s.currentPrice,
+              change: parseFloat((s.changePercent || 0).toFixed(2)),
+              volume: s.volume,
+              marketCap: s.marketCap,
+              lotSize: 10, // hardcoded for now or add to model
+              enabled: s.isActive,
+              lastUpdated: s.updatedAt || new Date().toISOString()
+          }));
+          setStocks(formattedStocks);
+      } else {
+          console.error('Failed to fetch stocks:', data.message);
+      }
     } catch (error) {
       console.error('Error fetching stocks:', error);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -127,137 +150,267 @@ const MarketData = () => {
     fetchStocksData();
   }, []);
 
+  // Scroll to form when it opens
+  useEffect(() => {
+    if (showAddForm && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [showAddForm]);
+
   // Filter stocks
   const filteredStocks = stocks.filter(stock => {
-    const matchesSearch = stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         stock.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSector = sectorFilter === 'all' || stock.sector === sectorFilter;
+    const matchesSearch = (stock.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         stock.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Case-insensitive sector matching with whitespace handling
+    const matchesSector = sectorFilter === 'all' || 
+      (stock.sector && stock.sector.trim().toLowerCase() === sectorFilter.trim().toLowerCase());
     return matchesSearch && matchesSector;
   });
 
   // Handle form changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewStock(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : 
-              type === 'number' ? parseFloat(value) || 0 : 
-              value
-    }));
+    
+    if (type === 'number') {
+      // Allow empty string for better UX, otherwise parse as float
+      if (value === '') {
+        setNewStock(prev => ({ ...prev, [name]: '' }));
+      } else {
+        setNewStock(prev => ({ ...prev, [name]: parseFloat(value) }));
+      }
+    } else {
+      setNewStock(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
   };
 
   // Add new stock
-  const handleAddStock = () => {
+  const handleAddStock = async () => {
     if (!newStock.symbol || !newStock.name) {
       alert('Please fill in symbol and name');
       return;
     }
 
-    const newStockData = {
-      id: stocks.length + 1,
-      ...newStock,
-      change: 0,
-      lastUpdated: new Date().toISOString()
-    };
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/stocks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                ...newStock,
+                // Ensure numeric values
+                currentPrice: Number(newStock.currentPrice) || 0,
+                volume: Number(newStock.volume) || 0,
+                marketCap: Number(newStock.marketCap) || 0,
+                lotSize: Number(newStock.lotSize) || 10,
+                sector: newStock.sector || 'Others', // Ensure sector is set
+                enabled: newStock.enabled
+            })
+        });
+        const data = await response.json();
 
-    setStocks(prev => [...prev, newStockData]);
-    setNewStock({
-      symbol: '',
-      name: '',
-      sector: 'Banking',
-      currentPrice: 0,
-      volume: 0,
-      marketCap: 0,
-      lotSize: 10,
-      enabled: true
-    });
-    setShowAddForm(false);
+        if (data.success) {
+            alert('Stock added successfully!');
+            fetchStocksData(); // Refresh list
+            setNewStock({
+                symbol: '',
+                name: '',
+                sector: 'Banking',
+                currentPrice: 0,
+                volume: 0,
+                marketCap: 0,
+                lotSize: 10,
+                enabled: true
+            });
+            setShowAddForm(false);
+        } else {
+            alert('Failed to add stock: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error adding stock:', error);
+        alert('Error adding stock. Check console.');
+    }
   };
 
   // Edit stock
   const handleEditStock = (stock) => {
-    setNewStock(stock);
+    setNewStock({
+        ...stock,
+        id: stock.id 
+    });
     setEditStockId(stock.id);
     setShowAddForm(true);
   };
 
   // Update stock
-  const handleUpdateStock = () => {
-    setStocks(prev =>
-      prev.map(stock =>
-        stock.id === editStockId
-          ? { ...stock, ...newStock, lastUpdated: new Date().toISOString() }
-          : stock
-      )
-    );
-    setShowAddForm(false);
-    setEditStockId(null);
-    setNewStock({
-      symbol: '',
-      name: '',
-      sector: 'Banking',
-      currentPrice: 0,
-      volume: 0,
-      marketCap: 0,
-      lotSize: 10,
-      enabled: true
-    });
+  const handleUpdateStock = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/stocks/${editStockId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                ...newStock,
+                // Ensure numeric values
+                currentPrice: Number(newStock.currentPrice) || 0,
+                volume: Number(newStock.volume) || 0,
+                marketCap: Number(newStock.marketCap) || 0,
+                lotSize: Number(newStock.lotSize) || 10,
+                isActive: newStock.enabled // Map enabled to isActive
+            })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Stock updated successfully!');
+            fetchStocksData();
+            setShowAddForm(false);
+            setEditStockId(null);
+            setNewStock({
+                symbol: '',
+                name: '',
+                sector: 'Banking',
+                currentPrice: 0,
+                volume: 0,
+                marketCap: 0,
+                lotSize: 10,
+                enabled: true
+            });
+        } else {
+            alert('Failed to update stock: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error updating stock:', error);
+        alert('Error updating stock.');
+    }
   };
 
   // Delete stock
-  const handleDeleteStock = (id) => {
+  const handleDeleteStock = async (id) => {
     if (window.confirm('Are you sure you want to delete this stock?')) {
-      setStocks(prev => prev.filter(stock => stock.id !== id));
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/stocks/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                alert('Stock deleted successfully');
+                fetchStocksData();
+            } else {
+                alert('Failed to delete stock: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error deleting stock:', error);
+        }
     }
   };
 
   // Toggle stock status
-  const handleToggleStock = (id) => {
-    setStocks(prev =>
-      prev.map(stock =>
-        stock.id === id
-          ? { ...stock, enabled: !stock.enabled, lastUpdated: new Date().toISOString() }
-          : stock
-      )
-    );
+  const handleToggleStock = async (id) => {
+    const stock = stocks.find(s => s.id === id);
+    if (!stock) return;
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/stocks/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                isActive: !stock.enabled
+            })
+        });
+        const data = await response.json();
+        if(data.success) {
+            fetchStocksData();
+        }
+    } catch (error) {
+        console.error('Error toggling stock:', error);
+    }
   };
 
-  // Bulk price update
-  const handleBulkPriceUpdate = () => {
-    const newPrices = prompt('Enter percentage change (e.g., +2.5 or -1.2):');
-    if (newPrices) {
-      const change = parseFloat(newPrices);
-      if (!isNaN(change)) {
-        setStocks(prev =>
-          prev.map(stock => ({
-            ...stock,
-            currentPrice: stock.currentPrice * (1 + change / 100),
-            change: change,
-            lastUpdated: new Date().toISOString()
-          }))
-        );
-      }
+  // Bulk price update (Simulate Market Movement)
+  const handleBulkPriceUpdate = async () => {
+    const percentInput = prompt("Enter percentage fluctuation (e.g., 2 for +2%, -1.5 for -1.5%):", "0");
+    if (percentInput === null) return;
+    
+    const percentage = parseFloat(percentInput);
+    if (isNaN(percentage)) {
+      alert("Invalid percentage!");
+      return;
+    }
+    
+    const confirmUpdate = window.confirm(`This will update ALL visible stocks by ${percentage}%. Continue?`);
+    if (!confirmUpdate) return;
+    
+    setIsLoading(true);
+    let updatedCount = 0;
+    
+    // Process purely in frontend loop for now as requested for "Manual Simulation"
+    // In a real production app, this should be a single backend endpoint
+    try {
+        const token = localStorage.getItem('token');
+        
+        for (const stock of filteredStocks) {
+            const fluctuation = percentage;
+            // Add a tiny bit of randomness so not everything is exactly same % if user wants
+            // But for now, stick to exactly what user typed for control
+            
+            const newPrice = stock.currentPrice * (1 + (fluctuation / 100));
+            const roundedPrice = Math.round(newPrice * 100) / 100; // 2 decimal places
+            
+            if (roundedPrice < 0) continue; // Safety check
+
+            await fetch(`http://localhost:5000/api/stocks/${stock.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ currentPrice: roundedPrice })
+            });
+            updatedCount++;
+        }
+        
+        alert(`Successfully updated ${updatedCount} stocks!`);
+        fetchStocksData();
+    } catch (error) {
+        console.error("Bulk update error:", error);
+        alert("Error during bulk update. Check console.");
+    } finally {
+        setIsLoading(false);
     }
   };
 
   // Individual price update
-  const handleIndividualPriceUpdate = (id, newPrice) => {
-    const stock = stocks.find(s => s.id === id);
-    if (stock) {
-      const change = ((newPrice - stock.currentPrice) / stock.currentPrice) * 100;
-      setStocks(prev =>
-        prev.map(stock =>
-          stock.id === id
-            ? {
-                ...stock,
-                currentPrice: newPrice,
-                change: parseFloat(change.toFixed(2)),
-                lastUpdated: new Date().toISOString()
-              }
-            : stock
-        )
-      );
-    }
+  const handleIndividualPriceUpdate = async (id, newPrice) => {
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`http://localhost:5000/api/stocks/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ currentPrice: newPrice })
+        });
+        fetchStocksData();
+      } catch (error) {
+          console.error('Price update error', error);
+      }
   };
 
   // Update API config
@@ -296,15 +449,20 @@ const MarketData = () => {
 
   // Get sector color
   const getSectorColor = (sector) => {
+    if (!sector) return '#6b7280'; // Default gray for undefined
+    const normalizedSector = sector.toString().trim().toLowerCase();
+    
+    // keys must be lowercased for matching
     const colors = {
-      Banking: '#3b82f6',
-      Telecom: '#8b5cf6',
-      Hydropower: '#10b981',
-      Finance: '#f59e0b',
-      Insurance: '#ec4899',
-      Others: '#6b7280'
+      banking: '#3b82f6',
+      telecom: '#8b5cf6',
+      hydropower: '#10b981',
+      finance: '#f59e0b',
+      insurance: '#ec4899',
+      manufacturing: '#ef4444',
+      others: '#6b7280'
     };
-    return colors[sector] || colors.Others;
+    return colors[normalizedSector] || colors.others;
   };
 
   if (isLoading) {
@@ -498,7 +656,7 @@ const MarketData = () => {
 
       {/* Add/Edit Stock Form */}
       {showAddForm && (
-        <div className={styles.addStockSection}>
+        <div className={styles.addStockSection} ref={formRef}>
           <div className={styles.formHeader}>
             <h3 className={styles.formTitle}>
               {editStockId ? '✏️ Edit Stock' : '➕ Add New Stock'}

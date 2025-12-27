@@ -8,6 +8,7 @@ import TradingRules from '../../components/admin/SystemConfig/TradingRules';
 import SystemLogs from '../../components/admin/Monitoring/SystemLogs';
 import PerformanceMetrics from '../../components/admin/Monitoring/PerformanceMetrics';
 import Reports from '../../components/admin/Monitoring/Reports';
+import AdminProfile from '../../components/admin/Profile/AdminProfile';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -476,6 +477,9 @@ const AdminDashboard = () => {
             </div>
           </div>
         );
+
+      case 'profile':
+        return <AdminProfile />;
       
       default:
         return <Dashboard />;

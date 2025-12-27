@@ -15,6 +15,7 @@ const UserModal = ({
     phone: '',
     role: 'user',
     status: 'active',
+    approved: false, // New: Approval checkbox
     virtualMoney: 10000,
     tradingLimit: 50000,
     suspensionDuration: 7,
@@ -35,6 +36,7 @@ const UserModal = ({
         phone: userData.phone || '',
         role: userData.role || 'user',
         status: userData.status || 'active',
+        approved: userData.approved || false, // New
         virtualMoney: userData.virtualMoney || 10000,
         tradingLimit: userData.tradingLimit || 50000,
         suspensionDuration: userData.suspensionDuration || 7,
@@ -51,6 +53,7 @@ const UserModal = ({
         phone: '',
         role: 'user',
         status: 'active',
+        approved: false, // New users default unapproved
         virtualMoney: 10000,
         tradingLimit: 50000,
         suspensionDuration: 7,
@@ -62,10 +65,10 @@ const UserModal = ({
   }, [userData, mode]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -116,6 +119,15 @@ const UserModal = ({
     }
   };
 
+  // New: Handle approval toggle
+  const handleApproveToggle = () => {
+    if (!formData.approved && window.confirm('Approve this user? They will gain access to the dashboard.')) {
+      setFormData(prev => ({ ...prev, approved: true }));
+    } else if (formData.approved && window.confirm('Unapprove this user? They will lose dashboard access.')) {
+      setFormData(prev => ({ ...prev, approved: false }));
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -135,8 +147,16 @@ const UserModal = ({
           </button>
         </div>
 
-        {/* Quick Actions Bar */}
+        {/* Quick Actions Bar - Updated to include approve toggle */}
         <div className={styles.quickActions}>
+          <button 
+            type="button"
+            className={`${styles.actionBtn} ${formData.approved ? styles.warning : styles.success}`}
+            onClick={handleApproveToggle}
+          >
+            {formData.approved ? '❌ Unapprove' : '✅ Approve'}
+          </button>
+          
           <button 
             type="button"
             className={`${styles.actionBtn} ${styles.suspendBtn}`}
@@ -231,7 +251,7 @@ const UserModal = ({
               </div>
             </div>
 
-            {/* Account Settings Section */}
+            {/* Account Settings Section - Updated to include approval checkbox */}
             <div className={styles.formSection}>
               <h3 className={styles.sectionTitle}>
                 <span className={styles.sectionIcon}>⚙️</span>
@@ -272,6 +292,23 @@ const UserModal = ({
                       <option value="deleted">🗑️ Deleted</option>
                     </select>
                   </label>
+                </div>
+
+                {/* New: Approval checkbox - Independent of status */}
+                <div className={styles.formGroup}>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="approved"
+                      checked={formData.approved}
+                      onChange={handleChange}
+                      className={styles.formCheckbox}
+                    />
+                    ✅ Admin Approved (Allows dashboard access)
+                  </label>
+                  <span className={styles.helperText}>
+                    If unchecked, user status will be 'pending' and cannot access dashboard.
+                  </span>
                 </div>
 
                 {/* Show suspension settings if suspended */}
@@ -430,7 +467,12 @@ const UserModal = ({
               <span className={styles.infoIcon}>📅</span>
               Last Updated: {new Date().toLocaleDateString()}
             </span>
-            {mode === 'edit' && formData.status !== 'active' && (
+            {mode === 'edit' && !formData.approved && (
+              <span className={styles.warningBadge}>
+                ⚠️ User is PENDING APPROVAL - No dashboard access
+              </span>
+            )}
+            {mode === 'edit' && formData.status !== 'active' && formData.approved && (
               <span className={styles.warningBadge}>
                 ⚠️ User is {formData.status.toUpperCase()}
               </span>

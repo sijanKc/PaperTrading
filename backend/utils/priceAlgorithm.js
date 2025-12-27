@@ -13,20 +13,20 @@ class ProfessionalPriceSimulator {
   // Standard Normal Distribution using Box-Muller transform
   standardNormalRandom() {
     let u = 0, v = 0;
-    while(u === 0) u = Math.random();
-    while(v === 0) v = Math.random();
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
     return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
   }
 
   // Geometric Brownian Motion - Industry Standard
-  geometricBrownianMotion(currentPrice, annualVolatility, annualDrift, timeDelta = 1/252) {
+  geometricBrownianMotion(currentPrice, annualVolatility, annualDrift, timeDelta = 1 / 252) {
     const dailyDrift = annualDrift * timeDelta;
     const dailyVolatility = annualVolatility * Math.sqrt(timeDelta);
     const randomShock = dailyVolatility * this.standardNormalRandom();
-    
+
     // GBM Formula: S_t = S_0 * exp((μ - σ²/2)t + σW_t)
     const newPrice = currentPrice * Math.exp(dailyDrift - (dailyVolatility * dailyVolatility) / 2 + randomShock);
-    
+
     return Math.max(0.01, newPrice); // Prevent negative prices
   }
 
@@ -65,7 +65,7 @@ class ProfessionalPriceSimulator {
 
     const multiplier = sectorMultipliers[sector] || 1.0;
     const sectorAdjustedChange = (price * marketMomentum * multiplier) - price;
-    
+
     return price + (sectorAdjustedChange * 0.3); // 30% sector influence
   }
 
@@ -73,7 +73,7 @@ class ProfessionalPriceSimulator {
   applyVolumeEffects(price, volume, baseVolatility) {
     const volumeFactor = Math.log10(volume + 100) / Math.log10(10000);
     const adjustedVolatility = baseVolatility * (0.8 + volumeFactor * 0.4);
-    
+
     return Math.max(0.05, Math.min(0.5, adjustedVolatility));
   }
 
@@ -82,18 +82,19 @@ class ProfessionalPriceSimulator {
     try {
       const stocks = await Stock.find({ isActive: true });
       const marketMomentum = await this.calculateMarketMomentum();
-      
+
       console.log(`🔄 Updating ${stocks.length} stocks (Market Momentum: ${(marketMomentum * 100).toFixed(2)}%)...`);
 
       const updatePromises = stocks.map(async (stock) => {
         try {
-          // Calculate time delta (2 minutes = 2/(24*60) of trading day)
-          const timeDelta = 2 / (24 * 60); // 2 minutes in trading days
-          
+          // Calculate time delta (each update = 1 hour of trading = 1/6.25 of trading day)
+          // NEPSE trades 6.25 hours per day (9:15 AM - 3:30 PM)
+          const timeDelta = 1 / 6.25; // Simulate 1 hour of trading per update
+
           // Adjust volatility based on volume
           const adjustedVolatility = this.applyVolumeEffects(
-            stock.currentPrice, 
-            stock.volume, 
+            stock.currentPrice,
+            stock.volume,
             stock.annualVolatility
           );
 
@@ -148,10 +149,10 @@ class ProfessionalPriceSimulator {
 
       const results = await Promise.all(updatePromises);
       const successfulUpdates = results.filter(r => r !== null);
-      
+
       console.log(`✅ ${successfulUpdates.length}/${stocks.length} stocks updated successfully!`);
       this.marketState.lastUpdate = new Date();
-      
+
       return successfulUpdates;
     } catch (error) {
       console.error('❌ Error in updateAllPrices:', error);
@@ -165,9 +166,9 @@ class ProfessionalPriceSimulator {
     const totalChange = stocks.reduce((sum, stock) => {
       return sum + ((stock.currentPrice - stock.previousClose) / stock.previousClose);
     }, 0);
-    
+
     const averageChange = (totalChange / stocks.length) * 100;
-    
+
     return {
       totalStocks: stocks.length,
       averageDailyChange: averageChange.toFixed(2) + '%',

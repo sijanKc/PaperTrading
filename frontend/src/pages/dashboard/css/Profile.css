@@ -1,0 +1,22 @@
+
+.profile-page-container {
+    padding-bottom: 50px;
+}
+
+.bg-dark-subtle {
+    background-color: rgba(30, 41, 59, 0.7) !important;
+}
+
+.form-control:disabled, .form-select:disabled {
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.border-secondary {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}

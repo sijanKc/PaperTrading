@@ -8,17 +8,19 @@ const UserCard = ({
   onBan, 
   onDelete,
   onViewTrades,
-  onSendMessage 
+  onSendMessage,
+  onApprove, // New prop for approve/reject
+  onReject 
 }) => {
   const [showActions, setShowActions] = useState(false);
   
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-NP', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'NPR',
       minimumFractionDigits: 0
-    }).format(amount);
+    }).format(amount).replace('NPR', 'Rs.');
   };
 
   // Format date
@@ -30,9 +32,10 @@ const UserCard = ({
     });
   };
 
-  // Get status badge
+  // Get status badge - Updated to include 'pending'
   const getStatusBadge = (status) => {
     const statusConfig = {
+      pending: { label: 'Pending', color: 'yellow', icon: '⏳' }, // New for unapproved
       active: { label: 'Active', color: 'green', icon: '✅' },
       inactive: { label: 'Inactive', color: 'gray', icon: '⚪' },
       suspended: { label: 'Suspended', color: 'orange', icon: '⏸️' },
@@ -73,6 +76,19 @@ const UserCard = ({
     const diffTime = Math.abs(today - join);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
+  };
+
+  // Handle approve/reject click
+  const handleApproveClick = () => {
+    if (window.confirm('Approve this user? They will gain access to the dashboard.')) {
+      onApprove(user.id);
+    }
+  };
+
+  const handleRejectClick = () => {
+    if (window.confirm('Reject this user? They will remain pending and cannot access the dashboard.')) {
+      onReject(user.id);
+    }
   };
 
   return (
@@ -152,6 +168,34 @@ const UserCard = ({
                 <span className={styles.menuIcon}>💬</span>
                 Send Message
               </button>
+              
+              {/* New Approve/Reject actions for pending users */}
+              {user.status === 'pending' && (
+                <>
+                  <div className={styles.menuDivider}></div>
+                  <button 
+                    className={`${styles.actionMenuItem} ${styles.success}`}
+                    onClick={() => {
+                      handleApproveClick();
+                      setShowActions(false);
+                    }}
+                  >
+                    <span className={styles.menuIcon}>✅</span>
+                    Approve User
+                  </button>
+                  
+                  <button 
+                    className={`${styles.actionMenuItem} ${styles.warning}`}
+                    onClick={() => {
+                      handleRejectClick();
+                      setShowActions(false);
+                    }}
+                  >
+                    <span className={styles.menuIcon}>❌</span>
+                    Reject User
+                  </button>
+                </>
+              )}
               
               <div className={styles.menuDivider}></div>
               
