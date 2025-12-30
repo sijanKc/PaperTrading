@@ -49,8 +49,12 @@ const transactionSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  note: {
+  notes: {
     type: String  // For stop-loss, circuit breaker, etc.
+  },
+  strategy: {
+    type: String,
+    default: 'Not Specified'
   }
 }, {
   timestamps: true

@@ -22,6 +22,11 @@ router.post('/entries', auth, addJournalEntry);
 // @access  Private
 router.get('/analytics', auth, getJournalAnalytics);
 
+// @route   PUT /api/journal/entries/:id
+// @desc    Update journal entry
+// @access  Private
+router.put('/entries/:id', auth, require('../controllers/journalController').updateJournalEntry);
+
 // @route   DELETE /api/journal/entries/:id
 // @desc    Delete journal entry
 // @access  Private

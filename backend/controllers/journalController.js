@@ -17,7 +17,7 @@ const getJournalEntries = async (req, res) => {
     // Transform transactions into journal entries
     const journalEntries = await Promise.all(transactions.map(async (tx) => ({
       id: tx._id,
-      symbol: tx.stockId.symbol,
+      symbol: tx.stockId ? tx.stockId.symbol : tx.symbol,
       type: tx.type,
       quantity: tx.quantity,
       entryPrice: tx.price,
@@ -117,6 +117,63 @@ const getJournalAnalytics = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching journal analytics'
+    });
+  }
+};
+
+// Update Journal Entry
+const updateJournalEntry = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const journalData = req.body;
+    const userId = req.user._id;
+
+    const transaction = await Transaction.findById(id);
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Journal entry not found'
+      });
+    }
+
+    // Make sure user owns the transaction
+    if (transaction.userId.toString() !== userId.toString()) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
+    // Update fields
+    if (journalData.symbol) {
+      transaction.symbol = journalData.symbol;
+      transaction.stockId = await getStockIdBySymbol(journalData.symbol);
+    }
+
+    if (journalData.type) transaction.type = journalData.type.toUpperCase();
+    if (journalData.quantity) transaction.quantity = journalData.quantity;
+    if (journalData.entryPrice) transaction.price = journalData.entryPrice;
+    if (journalData.notes !== undefined) transaction.notes = journalData.notes;
+    if (journalData.strategy) transaction.strategy = journalData.strategy;
+    if (journalData.entryDate) transaction.createdAt = new Date(journalData.entryDate);
+
+    // Recalculate total amount
+    transaction.totalAmount = transaction.quantity * transaction.price;
+
+    await transaction.save();
+
+    res.json({
+      success: true,
+      message: 'Journal entry updated successfully',
+      data: transaction
+    });
+
+  } catch (error) {
+    console.error('Update journal entry error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating journal entry'
     });
   }
 };
@@ -284,5 +341,6 @@ module.exports = {
   getJournalEntries,
   addJournalEntry,
   getJournalAnalytics,
+  updateJournalEntry,
   deleteJournalEntry
 };

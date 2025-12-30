@@ -5,9 +5,124 @@ import Header from "../../components/dashboard/Header";
 import api from '../../services/api';
 import styles from './css/TradingJournal.module.css';
 
+const TradeForm = ({ newTrade, handleInputChange, onCancel, onSave, isEditing, symbols }) => (
+  <div className={styles.tradeForm}>
+    <h3>{isEditing ? 'Edit Trade' : 'Add New Trade'}</h3>
+    <div className={styles.formGrid}>
+      <div className={styles.formGroup}>
+        <label>Stock Symbol</label>
+        <input
+          type="text"
+          value={newTrade.symbol}
+          onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
+          placeholder="e.g. NABIL, NTC"
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Trade Type</label>
+        <select 
+          value={newTrade.type}
+          onChange={(e) => handleInputChange('type', e.target.value)}
+        >
+          <option value="Buy">Buy</option>
+          <option value="Sell">Sell</option>
+        </select>
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Quantity</label>
+        <input
+          type="number"
+          value={newTrade.quantity}
+          onChange={(e) => handleInputChange('quantity', parseInt(e.target.value) || 0)}
+          min="1"
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Entry Price (Rs.)</label>
+        <input
+          type="number"
+          value={newTrade.entryPrice}
+          onChange={(e) => handleInputChange('entryPrice', parseFloat(e.target.value) || 0)}
+          min="0"
+          step="0.01"
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Exit Price (Rs.)</label>
+        <input
+          type="number"
+          value={newTrade.exitPrice}
+          onChange={(e) => handleInputChange('exitPrice', parseFloat(e.target.value) || 0)}
+          min="0"
+          step="0.01"
+          disabled={newTrade.type === 'Buy'}
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Entry Date</label>
+        <input
+          type="date"
+          value={newTrade.entryDate}
+          onChange={(e) => handleInputChange('entryDate', e.target.value)}
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Exit Date</label>
+        <input
+          type="date"
+          value={newTrade.exitDate}
+          onChange={(e) => handleInputChange('exitDate', e.target.value)}
+          disabled={newTrade.type === 'Buy'}
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Trading Strategy</label>
+        <select 
+          value={newTrade.strategy}
+          onChange={(e) => handleInputChange('strategy', e.target.value)}
+        >
+          <option value="Swing Trading">Swing Trading</option>
+          <option value="Day Trading">Day Trading</option>
+          <option value="Momentum">Momentum</option>
+          <option value="Value Investing">Value Investing</option>
+          <option value="Dividend Investing">Dividend Investing</option>
+          <option value="Not Specified">Not Specified</option>
+        </select>
+      </div>
+    </div>
+
+    <div className={styles.formGroup}>
+      <label>Notes & Analysis</label>
+      <textarea
+        value={newTrade.notes}
+        onChange={(e) => handleInputChange('notes', e.target.value)}
+        rows="3"
+        placeholder="Enter your trade analysis, reasons for entry/exit, emotions, lessons learned..."
+      />
+    </div>
+
+    <div className={styles.formActions}>
+      <button className={styles.cancelButton} onClick={onCancel}>
+        Cancel
+      </button>
+      <button className={styles.saveButton} onClick={onSave}>
+        {isEditing ? 'Update Trade' : 'Save Trade'}
+      </button>
+    </div>
+  </div>
+);
+
 const TradingJournal = () => {
   const [activeTab, setActiveTab] = useState('trades');
   const [showAddTrade, setShowAddTrade] = useState(false);
+  const [editingTrade, setEditingTrade] = useState(null);
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,12 +175,23 @@ const TradingJournal = () => {
     }));
   };
 
-  const addTrade = async () => {
+  const saveTrade = async () => {
     try {
-      const response = await api.post('/journal/entries', newTrade);
+      if (!newTrade.symbol) return alert('Symbol is required');
+      if (newTrade.quantity <= 0) return alert('Quantity must be greater than 0');
+      if (newTrade.entryPrice <= 0) return alert('Entry price must be greater than 0');
+
+      let response;
+      if (editingTrade) {
+        response = await api.put(`/journal/entries/${editingTrade}`, newTrade);
+      } else {
+        response = await api.post('/journal/entries', newTrade);
+      }
+
       if (response.data.success) {
         fetchJournalData(); // Refresh data
         setShowAddTrade(false);
+        setEditingTrade(null);
         setNewTrade({
           symbol: "",
           type: "Buy",
@@ -79,8 +205,8 @@ const TradingJournal = () => {
         });
       }
     } catch (err) {
-      console.error('Add trade error:', err);
-      alert('Failed to add trade: ' + (err.response?.data?.message || err.message));
+      console.error('Save trade error:', err);
+      alert('Failed to save trade: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -90,13 +216,44 @@ const TradingJournal = () => {
     try {
       const response = await api.delete(`/journal/entries/${id}`);
       if (response.data.success) {
-        // Optimistic update or refresh
         fetchJournalData();
       }
     } catch (err) {
       console.error('Delete trade error:', err);
       alert('Failed to delete trade');
     }
+  };
+
+  const startEdit = (trade) => {
+    setEditingTrade(trade.id || trade._id);
+    setNewTrade({
+      symbol: trade.symbol,
+      type: trade.type === 'SELL' ? 'Sell' : 'Buy',
+      quantity: trade.quantity,
+      entryPrice: trade.entryPrice,
+      exitPrice: trade.exitPrice || 0,
+      entryDate: new Date(trade.entryDate).toISOString().split('T')[0],
+      exitDate: trade.exitDate ? new Date(trade.exitDate).toISOString().split('T')[0] : "",
+      notes: trade.notes,
+      strategy: trade.strategy || "Not Specified"
+    });
+    setShowAddTrade(true);
+  };
+
+  const cancelEdit = () => {
+    setShowAddTrade(false);
+    setEditingTrade(null);
+    setNewTrade({
+      symbol: "",
+      type: "Buy",
+      quantity: 0,
+      entryPrice: 0,
+      exitPrice: 0,
+      entryDate: new Date().toISOString().split('T')[0],
+      exitDate: "",
+      notes: "",
+      strategy: "Swing Trading"
+    });
   };
 
   const getProfitColor = (value) => {
@@ -108,129 +265,13 @@ const TradingJournal = () => {
   };
 
   const getTypeBadge = (type) => {
-    return type === "Buy" ? styles.typeBuy : styles.typeSell;
+    return type === "BUY" || type === "Buy" ? styles.typeBuy : styles.typeSell;
   };
 
   const formatCurrency = (amount) => {
     if (amount === undefined || amount === null) return 'Rs. 0.00';
     return `Rs. ${amount.toLocaleString('en-NP', { minimumFractionDigits: 2 })}`;
   };
-
-  const TradeForm = () => (
-    <div className={styles.tradeForm}>
-      <h3>Add New Trade</h3>
-      <div className={styles.formGrid}>
-        <div className={styles.formGroup}>
-          <label>Stock Symbol</label>
-          <select 
-            value={newTrade.symbol}
-            onChange={(e) => handleInputChange('symbol', e.target.value)}
-          >
-            <option value="">Select Symbol</option>
-            <option value="NTC">NTC</option>
-            <option value="NABIL">NABIL</option>
-            <option value="SCB">SCB</option>
-            <option value="NICA">NICA</option>
-            <option value="NIB">NIB</option>
-          </select>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Trade Type</label>
-          <select 
-            value={newTrade.type}
-            onChange={(e) => handleInputChange('type', e.target.value)}
-          >
-            <option value="Buy">Buy</option>
-            <option value="Sell">Sell</option>
-          </select>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Quantity</label>
-          <input
-            type="number"
-            value={newTrade.quantity}
-            onChange={(e) => handleInputChange('quantity', parseInt(e.target.value))}
-            min="1"
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Entry Price (Rs.)</label>
-          <input
-            type="number"
-            value={newTrade.entryPrice}
-            onChange={(e) => handleInputChange('entryPrice', parseFloat(e.target.value))}
-            min="0"
-            step="0.01"
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Exit Price (Rs.)</label>
-          <input
-            type="number"
-            value={newTrade.exitPrice}
-            onChange={(e) => handleInputChange('exitPrice', parseFloat(e.target.value))}
-            min="0"
-            step="0.01"
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Entry Date</label>
-          <input
-            type="date"
-            value={newTrade.entryDate}
-            onChange={(e) => handleInputChange('entryDate', e.target.value)}
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Exit Date</label>
-          <input
-            type="date"
-            value={newTrade.exitDate}
-            onChange={(e) => handleInputChange('exitDate', e.target.value)}
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Trading Strategy</label>
-          <select 
-            value={newTrade.strategy}
-            onChange={(e) => handleInputChange('strategy', e.target.value)}
-          >
-            <option value="Swing Trading">Swing Trading</option>
-            <option value="Day Trading">Day Trading</option>
-            <option value="Momentum">Momentum</option>
-            <option value="Value Investing">Value Investing</option>
-            <option value="Dividend Investing">Dividend Investing</option>
-          </select>
-        </div>
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Notes & Analysis</label>
-        <textarea
-          value={newTrade.notes}
-          onChange={(e) => handleInputChange('notes', e.target.value)}
-          rows="3"
-          placeholder="Enter your trade analysis, reasons for entry/exit, emotions, lessons learned..."
-        />
-      </div>
-
-      <div className={styles.formActions}>
-        <button className={styles.cancelButton} onClick={() => setShowAddTrade(false)}>
-          Cancel
-        </button>
-        <button className={styles.saveButton} onClick={addTrade}>
-          Save Trade
-        </button>
-      </div>
-    </div>
-  );
 
   const StatsOverview = () => (
     <div className={styles.statsOverview}>
@@ -331,6 +372,7 @@ const TradingJournal = () => {
                     <button 
                       className={styles.editButton}
                       title="Edit Trade"
+                      onClick={() => startEdit(trade)}
                     >
                       ✏️
                     </button>
@@ -399,7 +441,7 @@ const TradingJournal = () => {
         <div className={styles.analyticsCard}>
           <h4>Strategy Performance</h4>
           <div className={styles.strategyStats}>
-            {['Swing Trading', 'Day Trading', 'Momentum', 'Value Investing', 'Dividend Investing'].map(strategy => {
+            {['Swing Trading', 'Day Trading', 'Momentum', 'Value Investing', 'Dividend Investing', 'Not Specified'].map(strategy => {
               const strategyTrades = trades.filter(t => t.strategy === strategy);
               const strategyProfit = strategyTrades.reduce((sum, t) => sum + t.profitLoss, 0);
               return strategyTrades.length > 0 ? (
@@ -486,17 +528,25 @@ const TradingJournal = () => {
                   {activeTab === 'trades' && (
                     <div className={styles.tradesTab}>
                       <div className={styles.tabHeader}>
-                        <h3>Trade History</h3>
-                        <button 
-                          className={styles.addTradeButton}
-                          onClick={() => setShowAddTrade(true)}
-                        >
-                          ➕ Add Trade
-                        </button>
+                        <h3>{editingTrade ? 'Edit Trade' : 'Trade History'}</h3>
+                        {!editingTrade && (
+                          <button 
+                            className={styles.addTradeButton}
+                            onClick={() => setShowAddTrade(true)}
+                          >
+                            ➕ Add Trade
+                          </button>
+                        )}
                       </div>
 
                       {showAddTrade ? (
-                        <TradeForm />
+                        <TradeForm 
+                          newTrade={newTrade}
+                          handleInputChange={handleInputChange}
+                          onCancel={cancelEdit}
+                          onSave={saveTrade}
+                          isEditing={!!editingTrade}
+                        />
                       ) : (
                         <TradesList />
                       )}
