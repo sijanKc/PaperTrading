@@ -32,6 +32,10 @@ const adminMiddleware = async (req, res, next) => {
             });
         }
 
+        // Update lastActive timestamp
+        user.lastActive = new Date();
+        await user.save({ validateBeforeSave: false });
+
         // Attach user to request object
         req.user = user;
         next();

@@ -1,113 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
+import api from '../../services/api';
 import styles from './css/Transactions.module.css';
 
 const Transactions = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock transactions data
-  const [transactions, setTransactions] = useState([
-    {
-      id: 1,
-      type: 'buy',
-      symbol: 'NTC',
-      name: 'Nepal Telecom',
-      quantity: 50,
-      price: 800,
-      amount: 40000,
-      date: '2024-01-15',
-      time: '10:30 AM',
-      status: 'completed',
-      orderType: 'Market',
-      fees: 100
-    },
-    {
-      id: 2,
-      type: 'sell',
-      symbol: 'NABIL',
-      name: 'Nabil Bank',
-      quantity: 25,
-      price: 1250,
-      amount: 31250,
-      date: '2024-01-18',
-      time: '02:15 PM',
-      status: 'completed',
-      orderType: 'Limit',
-      fees: 78
-    },
-    {
-      id: 3,
-      type: 'buy',
-      symbol: 'SCB',
-      name: 'Standard Chartered',
-      quantity: 100,
-      price: 480,
-      amount: 48000,
-      date: '2024-01-20',
-      time: '11:45 AM',
-      status: 'completed',
-      orderType: 'Market',
-      fees: 120
-    },
-    {
-      id: 4,
-      type: 'buy',
-      symbol: 'NICA',
-      name: 'NICA Bank',
-      quantity: 30,
-      price: 900,
-      amount: 27000,
-      date: '2024-01-22',
-      time: '09:20 AM',
-      status: 'pending',
-      orderType: 'Limit',
-      fees: 67
-    },
-    {
-      id: 5,
-      type: 'sell',
-      symbol: 'NTC',
-      name: 'Nepal Telecom',
-      quantity: 20,
-      price: 850,
-      amount: 17000,
-      date: '2024-01-25',
-      time: '03:30 PM',
-      status: 'completed',
-      orderType: 'Market',
-      fees: 42
-    },
-    {
-      id: 6,
-      type: 'dividend',
-      symbol: 'NTC',
-      name: 'Nepal Telecom',
-      quantity: 50,
-      price: 25,
-      amount: 1250,
-      date: '2024-01-28',
-      time: '12:00 PM',
-      status: 'completed',
-      orderType: 'Dividend',
-      fees: 0
+  const fetchTransactions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/trade/transactions');
+      if (response.data.success) {
+        setTransactions(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
+      setError('Failed to load transaction history');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   const stats = {
     totalTransactions: transactions.length,
     totalBuy: transactions.filter(t => t.type === 'buy').length,
     totalSell: transactions.filter(t => t.type === 'sell').length,
-    totalAmount: transactions.reduce((sum, t) => sum + t.amount, 0),
-    totalFees: transactions.reduce((sum, t) => sum + t.fees, 0),
+    totalAmount: transactions.reduce((sum, t) => sum + (t.totalAmount || 0), 0),
+    totalFees: transactions.reduce((sum, t) => sum + (t.fees || 0), 0),
     pendingOrders: transactions.filter(t => t.status === 'pending').length
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'completed': return styles.statusCompleted;
+      case 'executed': return styles.statusCompleted;
       case 'pending': return styles.statusPending;
       case 'failed': return styles.statusFailed;
       default: return styles.statusCompleted;
@@ -115,8 +51,9 @@ const Transactions = () => {
   };
 
   const getStatusIcon = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'completed': return '✅';
+      case 'executed': return '✅';
       case 'pending': return '⏳';
       case 'failed': return '❌';
       default: return '✅';
@@ -124,7 +61,7 @@ const Transactions = () => {
   };
 
   const getTypeColor = (type) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case 'buy': return styles.typeBuy;
       case 'sell': return styles.typeSell;
       case 'dividend': return styles.typeDividend;
@@ -133,7 +70,7 @@ const Transactions = () => {
   };
 
   const getTypeIcon = (type) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case 'buy': return '📈';
       case 'sell': return '📉';
       case 'dividend': return '💰';
@@ -149,12 +86,25 @@ const Transactions = () => {
     if (searchTerm && !transaction.symbol.toLowerCase().includes(searchTerm.toLowerCase()) && 
         !transaction.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     
-    // Date filter (you can implement more sophisticated date filtering)
+    // Date filter
+    if (dateFilter !== 'all') {
+      const date = new Date(transaction.createdAt);
+      const now = new Date();
+      if (dateFilter === 'today' && date.toDateString() !== now.toDateString()) return false;
+      if (dateFilter === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (date < weekAgo) return false;
+      }
+      if (dateFilter === 'month') {
+        if (date.getMonth() !== now.getMonth() || date.getFullYear() !== now.getFullYear()) return false;
+      }
+    }
+    
     return true;
   });
 
   const formatCurrency = (amount) => {
-    return `Nrs. ${amount.toLocaleString('en-NP')}`;
+    return `Rs. ${amount.toLocaleString('en-NP', { minimumFractionDigits: 2 })}`;
   };
 
   const formatDate = (dateString) => {
@@ -162,6 +112,13 @@ const Transactions = () => {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
+    });
+  };
+
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString('en-NP', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -238,12 +195,12 @@ const Transactions = () => {
           </thead>
           <tbody>
             {filteredTransactions.map((transaction) => (
-              <tr key={transaction.id} className={styles.tableRow}>
+              <tr key={transaction._id} className={styles.tableRow}>
                 <td className={styles.tableCell}>
                   <div className={`${styles.typeBadge} ${getTypeColor(transaction.type)}`}>
                     <span className={styles.typeIcon}>{getTypeIcon(transaction.type)}</span>
                     <span className={styles.typeText}>
-                      {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                      {transaction.type.toUpperCase()}
                     </span>
                   </div>
                 </td>
@@ -264,13 +221,13 @@ const Transactions = () => {
                 </td>
                 
                 <td className={styles.tableCell}>
-                  <div className={styles.amount}>{formatCurrency(transaction.amount)}</div>
+                  <div className={styles.amount}>{formatCurrency(transaction.totalAmount)}</div>
                 </td>
                 
                 <td className={styles.tableCell}>
                   <div className={styles.datetime}>
-                    <div className={styles.date}>{formatDate(transaction.date)}</div>
-                    <div className={styles.time}>{transaction.time}</div>
+                    <div className={styles.date}>{formatDate(transaction.createdAt)}</div>
+                    <div className={styles.time}>{formatTime(transaction.createdAt)}</div>
                   </div>
                 </td>
                 
@@ -278,13 +235,13 @@ const Transactions = () => {
                   <div className={`${styles.statusBadge} ${getStatusColor(transaction.status)}`}>
                     <span className={styles.statusIcon}>{getStatusIcon(transaction.status)}</span>
                     <span className={styles.statusText}>
-                      {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                      {transaction.status.toUpperCase()}
                     </span>
                   </div>
                 </td>
                 
                 <td className={styles.tableCell}>
-                  <div className={styles.orderType}>{transaction.orderType}</div>
+                  <div className={styles.orderType}>{transaction.orderType || 'Market'}</div>
                 </td>
                 
                 <td className={styles.tableCell}>
@@ -298,7 +255,7 @@ const Transactions = () => {
         </table>
       </div>
 
-      {filteredTransactions.length === 0 && (
+      {filteredTransactions.length === 0 && !loading && (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>📊</div>
           <h4>No Transactions Found</h4>
@@ -308,10 +265,17 @@ const Transactions = () => {
             onClick={() => {
               setActiveTab('all');
               setSearchTerm('');
+              setDateFilter('all');
             }}
           >
             Clear Filters
           </button>
+        </div>
+      )}
+
+      {loading && (
+        <div className={styles.loadingState} style={{ textAlign: 'center', padding: '2rem' }}>
+          <p>Loading transactions...</p>
         </div>
       )}
     </div>
@@ -350,6 +314,12 @@ const Transactions = () => {
             <h1>💳 Transactions History</h1>
             <p>Track all your stock trading activities and orders</p>
           </div>
+
+          {error && (
+            <div className={styles.errorBanner} style={{ color: 'red', textAlign: 'center', marginBottom: '1rem' }}>
+              ⚠️ {error}
+            </div>
+          )}
 
           {/* Stats Overview */}
           <TransactionStats />
@@ -403,7 +373,6 @@ const Transactions = () => {
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
-                <option value="quarter">This Quarter</option>
               </select>
             </div>
           </div>
@@ -427,7 +396,7 @@ const Transactions = () => {
                 <h3>Recent Activity</h3>
                 <div className={styles.activityList}>
                   {transactions.slice(0, 5).map(transaction => (
-                    <div key={transaction.id} className={styles.activityItem}>
+                    <div key={transaction._id} className={styles.activityItem}>
                       <div className={styles.activityIcon}>
                         {getTypeIcon(transaction.type)}
                       </div>
@@ -436,40 +405,14 @@ const Transactions = () => {
                           {transaction.type.toUpperCase()} {transaction.symbol}
                         </div>
                         <div className={styles.activitySubtitle}>
-                          {transaction.quantity} shares • {formatCurrency(transaction.amount)}
+                          {transaction.quantity} shares • {formatCurrency(transaction.totalAmount)}
                         </div>
                         <div className={styles.activityTime}>
-                          {formatDate(transaction.date)} • {transaction.time}
+                          {formatDate(transaction.createdAt)} • {formatTime(transaction.createdAt)}
                         </div>
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              <div className={styles.quickStats}>
-                <h3>Quick Stats</h3>
-                <div className={styles.quickStatsGrid}>
-                  <div className={styles.quickStat}>
-                    <span className={styles.quickStatLabel}>Avg. Trade Size</span>
-                    <span className={styles.quickStatValue}>
-                      {formatCurrency(stats.totalAmount / stats.totalTransactions)}
-                    </span>
-                  </div>
-                  <div className={styles.quickStat}>
-                    <span className={styles.quickStatLabel}>Success Rate</span>
-                    <span className={styles.quickStatValue}>
-                      {((transactions.filter(t => t.status === 'completed').length / transactions.length) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className={styles.quickStat}>
-                    <span className={styles.quickStatLabel}>Busiest Day</span>
-                    <span className={styles.quickStatValue}>Monday</span>
-                  </div>
-                  <div className={styles.quickStat}>
-                    <span className={styles.quickStatLabel}>Favorite Stock</span>
-                    <span className={styles.quickStatValue}>NTC</span>
-                  </div>
                 </div>
               </div>
             </div>

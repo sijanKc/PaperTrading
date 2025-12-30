@@ -3,78 +3,61 @@ import StatsCards from './StatsCards';
 import Charts from './Charts';
 import styles from '../../admincss/Dashboard.module.css';
 
-const Dashboard = () => {
-  const [isLoading, setIsLoading] = useState(true);
+const Dashboard = ({ stats, loading, setActiveTab }) => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [activeView, setActiveView] = useState('overview'); // overview, detailed, quickview
   const [refreshInterval, setRefreshInterval] = useState(300000); // 5 minutes
 
-  // Simulate data loading
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    setLastUpdated(new Date());
+  }, [stats]);
 
-    // Auto-refresh interval
-    const refreshTimer = setInterval(() => {
-      setLastUpdated(new Date());
-      console.log('Data auto-refreshed at:', new Date().toLocaleTimeString());
-    }, refreshInterval);
+  // Recent activities from backend or fallback
+  const recentActivities = stats?.activities?.map(act => {
+    const timeDiff = Math.floor((new Date() - new Date(act.time)) / (1000 * 60)); // minutes
+    let timeStr = 'Just now';
+    if (timeDiff >= 60 * 24) timeStr = `${Math.floor(timeDiff / (60 * 24))}d ago`;
+    else if (timeDiff >= 60) timeStr = `${Math.floor(timeDiff / 60)}h ago`;
+    else if (timeDiff > 0) timeStr = `${timeDiff}m ago`;
 
-    return () => {
-      clearTimeout(timer);
-      clearInterval(refreshTimer);
+    return { ...act, time: timeStr };
+  }) || [];
+
+  // System alerts from backend monitoring
+  const [systemAlerts, setSystemAlerts] = useState([]);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/monitoring/alerts', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setSystemAlerts(data.alerts.map((a, idx) => ({
+            id: idx + 1,
+            type: a.type === 'critical' ? 'warning' : 'info', // Map to CSS classes
+            message: a.message,
+            time: a.value
+          })));
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard alerts:', err);
+      }
     };
-  }, [refreshInterval]);
+    fetchAlerts();
+  }, []);
 
   // Quick actions data
   const quickActions = [
-    { id: 1, icon: '🚀', label: 'Launch Competition', color: 'purple', action: () => alert('Launch competition clicked') },
-    { id: 2, icon: '👥', label: 'Add Users', color: 'blue', action: () => alert('Add users clicked') },
-    { id: 3, icon: '📰', label: 'Post News', color: 'green', action: () => alert('Post news clicked') },
-    { id: 4, icon: '⚙️', label: 'Settings', color: 'gray', action: () => alert('Settings clicked') },
+    { id: 1, icon: '🚀', label: 'Launch Competition', color: 'purple', action: () => setActiveTab('competitions') },
+    { id: 2, icon: '👥', label: 'Add Users', color: 'blue', action: () => setActiveTab('users') },
+    { id: 3, icon: '📰', label: 'Market Control', color: 'green', action: () => setActiveTab('market') },
+    { id: 4, icon: '⚙️', label: 'Settings', color: 'gray', action: () => setActiveTab('settings') },
   ];
 
-  // Recent activities
-  const recentActivities = [
-    { id: 1, user: 'John Doe', action: 'placed a trade', stock: 'NIC', time: '2 min ago', type: 'trade' },
-    { id: 2, user: 'Jane Smith', action: 'joined platform', time: '15 min ago', type: 'join' },
-    { id: 3, user: 'Admin', action: 'updated trading rules', time: '1 hour ago', type: 'system' },
-    { id: 4, user: 'TraderPro', action: 'achieved top rank', time: '2 hours ago', type: 'achievement' },
-    { id: 5, user: 'System', action: 'auto-backup completed', time: '3 hours ago', type: 'system' },
-  ];
-
-  // System alerts
-  const systemAlerts = [
-    { id: 1, type: 'info', message: 'NEPSE market opens in 30 minutes', time: '10:30 AM' },
-    { id: 2, type: 'warning', message: 'High server load detected', time: '9:45 AM' },
-    { id: 3, type: 'success', message: 'All systems operational', time: '9:00 AM' },
-  ];
-
-  // Format time
-  const formatTime = (date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
-  // Handle manual refresh
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setLastUpdated(new Date());
-      setIsLoading(false);
-    }, 800);
-  };
-
-  // Change refresh interval
-  const handleIntervalChange = (interval) => {
-    setRefreshInterval(interval);
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.loadingSpinner}></div>
@@ -103,7 +86,7 @@ const Dashboard = () => {
           <div className={styles.refreshControls}>
             <button 
               className={styles.refreshBtn}
-              onClick={handleRefresh}
+              onClick={() => window.location.reload()}
               title="Refresh data"
             >
               <span className={styles.refreshIcon}>🔄</span>
@@ -115,7 +98,7 @@ const Dashboard = () => {
               <select 
                 className={styles.intervalSelect}
                 value={refreshInterval}
-                onChange={(e) => handleIntervalChange(parseInt(e.target.value))}
+                onChange={(e) => setRefreshInterval(parseInt(e.target.value))}
               >
                 <option value={60000}>1 minute</option>
                 <option value={300000}>5 minutes</option>
@@ -128,7 +111,7 @@ const Dashboard = () => {
           
           <div className={styles.lastUpdated}>
             <span className={styles.updatedLabel}>Last updated:</span>
-            <span className={styles.updatedTime}>{formatTime(lastUpdated)}</span>
+            <span className={styles.updatedTime}>{lastUpdated.toLocaleTimeString()}</span>
           </div>
         </div>
       </div>
@@ -283,7 +266,7 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <StatsCards />
+            <StatsCards stats={stats} />
           </div>
 
           {/* Charts Section */}
@@ -301,7 +284,7 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <Charts />
+            <Charts stats={stats} />
           </div>
 
         </div>

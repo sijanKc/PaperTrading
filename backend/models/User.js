@@ -111,6 +111,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 100000
   },
+  tradingLimit: {
+    type: Number,
+    default: 500000
+  },
   initialBalance: {
     type: Number,
     default: 100000 // Set when user first registers
@@ -163,7 +167,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
-  }
+  },
+  lastActive: {
+    type: Date,
+    default: Date.now
+  },
+
+  // Admin Management Fields
+  suspensionReason: String,
+  banReason: String,
+  adminNotes: String
 });
 
 const User = mongoose.model('User', userSchema);

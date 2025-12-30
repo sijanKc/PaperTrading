@@ -41,6 +41,14 @@ const transactionSchema = new mongoose.Schema({
     enum: ['PENDING', 'COMPLETED', 'FAILED'],
     default: 'COMPLETED'
   },
+  orderType: {
+    type: String,
+    default: 'Market'
+  },
+  fees: {
+    type: Number,
+    default: 0
+  },
   note: {
     type: String  // For stop-loss, circuit breaker, etc.
   }

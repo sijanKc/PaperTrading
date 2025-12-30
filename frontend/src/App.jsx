@@ -20,6 +20,8 @@ import Feedback from "./pages/dashboard/Feedback";
 import HelpAndSupport from "./pages/dashboard/HelpAndSupport";
 import Settings from "./pages/dashboard/Settings";
 import Profile from "./pages/dashboard/Profile";
+import Competitions from "./pages/dashboard/Competitions";
+import HealthCheck from "./pages/dashboard/HealthCheck";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRoute from "./components/admin/AdminRoute";
@@ -56,6 +58,8 @@ function App() {
         <Route path="/help" element={<ProtectedRoute><HelpAndSupport /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/competitions" element={<ProtectedRoute><Competitions /></ProtectedRoute>} />
+        <Route path="/health-check" element={<ProtectedRoute><HealthCheck /></ProtectedRoute>} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />

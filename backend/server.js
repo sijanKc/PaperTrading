@@ -76,6 +76,10 @@ app.use('/api/strategy', require('./routes/strategy'));       // For StrategyTes
 app.use('/api/journal', require('./routes/journal'));         // For TradingJournal
 app.use('/api/stats', require('./routes/stats'));             // For PaperTradingStats 🆕 ADDED
 app.use('/api/admin', require('./routes/admin'));             // For Admin Dashboard 🆕 ADDED
+app.use('/api/settings', require('./routes/settings'));       // For User Settings
+app.use('/api/competitions', require('./routes/competitions')); // For Competitions 🆕 ADDED
+app.use('/api/reports', require('./routes/reports'));           // For Reports 🆕 ADDED
+app.use('/api/monitoring', require('./routes/monitoring'));     // For System Monitoring 🆕 ADDED
 
 // ==================== BASIC ROUTES ====================
 // Basic Route
@@ -261,7 +265,18 @@ app.use((req, res) => {
 
       // Stats Routes
       'GET /api/stats/overview',
-      'GET /api/stats/paper'
+      'GET /api/stats/paper',
+
+      // Report Routes
+      'GET /api/reports',
+      'POST /api/reports/generate',
+      'DELETE /api/reports/:id',
+
+      // Monitoring Routes
+      'GET /api/monitoring/metrics',
+      'GET /api/monitoring/logs',
+      'DELETE /api/monitoring/logs',
+      'GET /api/monitoring/alerts'
     ],
     documentation: 'Visit GET /api/docs for complete API documentation'
   });

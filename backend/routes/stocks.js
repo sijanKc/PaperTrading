@@ -12,10 +12,16 @@ const {
   getAdminStocks,
   createStock,
   updateStock,
-  deleteStock
+  deleteStock,
+  bulkUpdatePrice
 } = require('../controllers/stockController');
 
 // ... Public Routes above ...
+
+// @route   POST /api/stocks/bulk-update-price
+// @desc    Bulk update stock prices
+// @access  Admin
+router.post('/bulk-update-price', authMiddleware, adminMiddleware, bulkUpdatePrice);
 
 // @route   GET /api/stocks/admin/all
 // @desc    Get all stocks for admin

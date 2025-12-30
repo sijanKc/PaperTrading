@@ -46,6 +46,10 @@ const auth = async (req, res, next) => {
       });
     }
 
+    // Update lastActive timestamp
+    user.lastActive = new Date();
+    await user.save({ validateBeforeSave: false });
+
     req.user = user;
     next();
   } catch (error) {

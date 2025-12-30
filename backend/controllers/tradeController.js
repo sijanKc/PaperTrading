@@ -28,7 +28,7 @@ const buyStock = async (req, res) => {
     if (user.virtualBalance < totalCost) {
       return res.status(400).json({
         success: false,
-        message: `Insufficient balance. Required: ₹${totalCost}, Available: ₹${user.virtualBalance}`
+        message: `Insufficient balance. Required: Rs. ${totalCost}, Available: Rs. ${user.virtualBalance.toFixed(2)}`
       });
     }
 
@@ -77,7 +77,8 @@ const buyStock = async (req, res) => {
         symbol: stock.symbol,
         quantity: quantity,
         averageBuyPrice: stock.currentPrice,
-        totalInvestment: totalCost
+        totalInvestment: totalCost,
+        sector: stock.sector // Added missing sector field
       });
     }
 
@@ -93,7 +94,9 @@ const buyStock = async (req, res) => {
       quantity: quantity,
       price: stock.currentPrice,
       totalAmount: totalCost,
-      status: 'COMPLETED'
+      status: 'COMPLETED',
+      orderType: 'Market', // Default to Market for now
+      fees: 0 // Mock fees for now
     });
 
     // Create order record
@@ -120,7 +123,7 @@ const buyStock = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Successfully bought ${quantity} shares of ${stock.symbol} at ₹${stock.currentPrice}`,
+      message: `Successfully bought ${quantity} shares of ${stock.symbol} at Rs. ${stock.currentPrice}`,
       order: {
         symbol: stock.symbol,
         quantity: quantity,
@@ -134,7 +137,7 @@ const buyStock = async (req, res) => {
     console.error('Buy stock error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error executing buy order'
+      message: `Error executing buy order: ${error.message || 'Internal Server Error'}`
     });
   }
 };
@@ -209,7 +212,9 @@ const sellStock = async (req, res) => {
       quantity: quantity,
       price: stock.currentPrice,
       totalAmount: totalAmount,
-      status: 'COMPLETED'
+      status: 'COMPLETED',
+      orderType: 'Market',
+      fees: 0
     });
 
     // Create order record
@@ -235,7 +240,7 @@ const sellStock = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Successfully sold ${quantity} shares of ${stock.symbol} at ₹${stock.currentPrice}`,
+      message: `Successfully sold ${quantity} shares of ${stock.symbol} at Rs. ${stock.currentPrice}`,
       order: {
         symbol: stock.symbol,
         quantity: quantity,
@@ -299,14 +304,20 @@ const getPortfolio = async (req, res) => {
       totalProfitLoss: totalProfitLoss
     });
 
+    // Get latest user balance to ensure the frontend has it
+    const user = await User.findById(userId).select('virtualBalance');
+
     res.json({
       success: true,
-      portfolio: portfolioWithDetails,
-      summary: {
-        totalPortfolioValue,
-        totalInvestment,
-        totalProfitLoss,
-        totalProfitLossPercentage: totalProfitLossPercentage.toFixed(2)
+      data: {
+        holdings: portfolioWithDetails,
+        virtualBalance: user.virtualBalance,
+        summary: {
+          totalPortfolioValue,
+          totalInvestment,
+          totalProfitLoss,
+          totalProfitLossPercentage: totalProfitLossPercentage.toFixed(2)
+        }
       }
     });
 
@@ -330,17 +341,25 @@ const getTransactionHistory = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(parseInt(limit));
 
+    // Get latest user balance
+    const user = await User.findById(userId).select('virtualBalance');
+
     res.json({
       success: true,
-      transactions: transactions.map(t => ({
-        symbol: t.stockId.symbol,
-        name: t.stockId.name,
-        type: t.type,
+      data: transactions.map(t => ({
+        _id: t._id,
+        symbol: t.stockId?.symbol || t.symbol,
+        name: t.stockId?.name || 'N/A',
+        type: t.type.toLowerCase(),
         quantity: t.quantity,
         price: t.price,
         totalAmount: t.totalAmount,
-        timestamp: t.createdAt
-      }))
+        status: t.status.toLowerCase(),
+        orderType: t.orderType || 'Market',
+        fees: t.fees || 0,
+        createdAt: t.createdAt
+      })),
+      virtualBalance: user.virtualBalance
     });
 
   } catch (error) {

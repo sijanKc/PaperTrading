@@ -648,9 +648,9 @@
 
 }
 
-/* Dark Theme */
+/* Dark Theme Enhancements */
 [data-bs-theme="dark"] .dashboardContainer {
-  background-color: #111827;
+  background-color: #0f172a;
 }
 
 [data-bs-theme="dark"] .tabsContainer,
@@ -658,9 +658,10 @@
 [data-bs-theme="dark"] .overviewCard,
 [data-bs-theme="dark"] .metricCard,
 [data-bs-theme="dark"] .strategyItem {
-  background: #1f2937;
-  border-color: #374151;
-  color: #f9fafb;
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
 }
 
 [data-bs-theme="dark"] .header h1,
@@ -670,8 +671,9 @@
 [data-bs-theme="dark"] .overviewContent h3,
 [data-bs-theme="dark"] .performanceMetrics h3,
 [data-bs-theme="dark"] .monthlyPerformance h3,
-[data-bs-theme="dark"] .strategyHeader h4 {
-  color: #f9fafb;
+[data-bs-theme="dark"] .strategyHeader h4,
+[data-bs-theme="dark"] .tabHeader h3 {
+  color: #f3f4f6 !important;
 }
 
 [data-bs-theme="dark"] .header p,
@@ -679,79 +681,99 @@
 [data-bs-theme="dark"] .metricDescription,
 [data-bs-theme="dark"] .strategyStats,
 [data-bs-theme="dark"] .loadingText,
-[data-bs-theme="dark"] .placeholderState {
-  color: #9ca3af;
+[data-bs-theme="dark"] .placeholderState p {
+  color: #94a3b8;
 }
 
 [data-bs-theme="dark"] .tabsNav {
-  background: #1f2937;
-  border-bottom-color: #374151;
+  background: #111827;
+  border-bottom-color: #334155;
 }
 
 [data-bs-theme="dark"] .tabButton {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 [data-bs-theme="dark"] .tabButton:hover {
-  color: #f9fafb;
-  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 [data-bs-theme="dark"] .tabButtonActive {
-  color: #60a5fa;
-  border-bottom-color: #60a5fa;
-  background: #1f2937;
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+  background: #1e293b;
 }
 
 [data-bs-theme="dark"] .formGroup label,
 [data-bs-theme="dark"] .parameterGroup label,
 [data-bs-theme="dark"] .metricTitle,
 [data-bs-theme="dark"] .monthName {
-  color: #e5e7eb;
+  color: #e2e8f0;
 }
 
 [data-bs-theme="dark"] .formGroup input,
 [data-bs-theme="dark"] .formGroup select,
 [data-bs-theme="dark"] .parameterGroup input {
-  background: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
+  background: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
 }
 
 [data-bs-theme="dark"] .formGroup input:focus,
 [data-bs-theme="dark"] .formGroup select:focus,
 [data-bs-theme="dark"] .parameterGroup input:focus {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
 }
 
 [data-bs-theme="dark"] .overviewIcon {
-  background: #374151;
-  color: #e5e7eb;
+  background: #334155;
+  color: #f1f5f9;
 }
 
 [data-bs-theme="dark"] .barContainer {
-  background: #374151;
+  background: #334155;
 }
 
 [data-bs-theme="dark"] .chartPlaceholder {
-  background: #1f2937;
-  border-color: #4b5563;
+  background: #111827;
+  border-color: #334155;
+  color: #94a3b8;
 }
 
-[data-bs-theme="dark"] .actionButton,
-[data-bs-theme="dark"] .deleteButton {
-  background: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
+[data-bs-theme="dark"] .actionButton {
+  background: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
 }
 
 [data-bs-theme="dark"] .actionButton:hover {
-  background: #4b5563;
+  background: #475569;
+}
+
+[data-bs-theme="dark"] .deleteButton {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #991b1b;
+  color: #f87171;
 }
 
 [data-bs-theme="dark"] .deleteButton:hover {
-  background: #7f1d1d;
-  border-color: #991b1b;
-  color: #fecaca;
+  background: #b91c1c;
+  color: white;
+}
+
+[data-bs-theme="dark"] .textSuccess,
+[data-bs-theme="dark"] .performanceExcellent,
+[data-bs-theme="dark"] .performanceGood {
+  color: #4ade80 !important;
+}
+
+[data-bs-theme="dark"] .textDanger,
+[data-bs-theme="dark"] .performancePoor {
+  color: #f87171 !important;
+}
+
+[data-bs-theme="dark"] .performanceFair {
+  color: #fbbf24 !important;
 }

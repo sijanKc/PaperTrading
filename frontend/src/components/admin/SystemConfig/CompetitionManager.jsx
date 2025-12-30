@@ -3,79 +3,7 @@ import styles from '../../admincss/CompetitionManager.module.css';
 
 const CompetitionManager = () => {
   // Competitions State
-  const [competitions, setCompetitions] = useState([
-    {
-      id: 1,
-      name: 'NEPSE Masters Challenge',
-      status: 'active',
-      type: 'public',
-      startDate: '2024-02-01',
-      endDate: '2024-02-28',
-      duration: '28 days',
-      participants: 45,
-      maxParticipants: 100,
-      entryFee: 0,
-      prizePool: 50000,
-      startingBalance: 100000,
-      rules: {
-        maxDailyTrades: 10,
-        allowedSectors: ['Banking', 'Finance'],
-        minHoldingPeriod: 1
-      },
-      leaderboard: [
-        { rank: 1, name: 'John Doe', profit: 25600, return: 25.6 },
-        { rank: 2, name: 'Jane Smith', profit: 18900, return: 18.9 },
-        { rank: 3, name: 'Bob Wilson', profit: 12500, return: 12.5 }
-      ],
-      createdAt: '2024-01-15'
-    },
-    {
-      id: 2,
-      name: 'Banking Sector Battle',
-      status: 'upcoming',
-      type: 'private',
-      startDate: '2024-03-01',
-      endDate: '2024-03-15',
-      duration: '15 days',
-      participants: 28,
-      maxParticipants: 50,
-      entryFee: 500,
-      prizePool: 25000,
-      startingBalance: 50000,
-      rules: {
-        maxDailyTrades: 5,
-        allowedSectors: ['Banking'],
-        minHoldingPeriod: 2
-      },
-      leaderboard: [],
-      createdAt: '2024-01-20'
-    },
-    {
-      id: 3,
-      name: 'Beginners Tournament',
-      status: 'completed',
-      type: 'public',
-      startDate: '2024-01-01',
-      endDate: '2024-01-31',
-      duration: '31 days',
-      participants: 120,
-      maxParticipants: 150,
-      entryFee: 0,
-      prizePool: 75000,
-      startingBalance: 50000,
-      rules: {
-        maxDailyTrades: 15,
-        allowedSectors: ['All'],
-        minHoldingPeriod: 0
-      },
-      leaderboard: [
-        { rank: 1, name: 'Alice Johnson', profit: 35600, return: 71.2 },
-        { rank: 2, name: 'Charlie Brown', profit: 28900, return: 57.8 },
-        { rank: 3, name: 'David Lee', profit: 24500, return: 49.0 }
-      ],
-      createdAt: '2023-12-20'
-    }
-  ]);
+  const [competitions, setCompetitions] = useState([]);
 
   // New Competition Form
   const [newCompetition, setNewCompetition] = useState({
@@ -84,7 +12,6 @@ const CompetitionManager = () => {
     type: 'public',
     startDate: '',
     endDate: '',
-    duration: 30,
     maxParticipants: 100,
     entryFee: 0,
     prizePool: 0,
@@ -104,13 +31,14 @@ const CompetitionManager = () => {
   });
 
   // UI State
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list', 'details', 'leaderboard'
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [editingCompetition, setEditingCompetition] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   // Statistics
   const [stats, setStats] = useState({
@@ -122,14 +50,38 @@ const CompetitionManager = () => {
     totalPrizePool: 0
   });
 
+  // Fetch Competitions from API
+  const fetchCompetitions = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/competitions', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setCompetitions(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching competitions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompetitions();
+  }, []);
+
   // Calculate stats
   useEffect(() => {
+    if (!competitions.length) return;
     const newStats = {
       total: competitions.length,
       active: competitions.filter(c => c.status === 'active').length,
       upcoming: competitions.filter(c => c.status === 'upcoming').length,
       completed: competitions.filter(c => c.status === 'completed').length,
-      totalParticipants: competitions.reduce((sum, comp) => sum + comp.participants, 0),
+      totalParticipants: competitions.reduce((sum, comp) => sum + (comp.participantsCount || 0), 0),
       totalPrizePool: competitions.reduce((sum, comp) => sum + comp.prizePool, 0)
     };
     setStats(newStats);
@@ -184,58 +136,32 @@ const CompetitionManager = () => {
   };
 
   // Create new competition
-  const handleCreateCompetition = () => {
+  const handleCreateCompetition = async () => {
     if (!newCompetition.name || !newCompetition.startDate || !newCompetition.endDate) {
       alert('Please fill in all required fields');
       return;
     }
 
-    const duration = calculateDuration(newCompetition.startDate, newCompetition.endDate);
-    
-    const competitionData = {
-      id: competitions.length + 1,
-      name: newCompetition.name,
-      status: new Date(newCompetition.startDate) > new Date() ? 'upcoming' : 'active',
-      type: newCompetition.type,
-      startDate: newCompetition.startDate,
-      endDate: newCompetition.endDate,
-      duration: `${duration} days`,
-      participants: 0,
-      maxParticipants: newCompetition.maxParticipants,
-      entryFee: newCompetition.entryFee,
-      prizePool: newCompetition.prizePool,
-      startingBalance: newCompetition.startingBalance,
-      rules: newCompetition.rules,
-      leaderboard: [],
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-
-    setCompetitions(prev => [...prev, competitionData]);
-    setShowCreateForm(false);
-    setNewCompetition({
-      name: '',
-      description: '',
-      type: 'public',
-      startDate: '',
-      endDate: '',
-      duration: 30,
-      maxParticipants: 100,
-      entryFee: 0,
-      prizePool: 0,
-      startingBalance: 100000,
-      rules: {
-        maxDailyTrades: 10,
-        allowedSectors: ['All'],
-        minHoldingPeriod: 1,
-        shortSelling: false,
-        marginTrading: false
-      },
-      prizes: [
-        { position: 1, prize: 'Champion Trophy' },
-        { position: 2, prize: 'Runner-up Certificate' },
-        { position: 3, prize: 'Consolation Prize' }
-      ]
-    });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/competitions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newCompetition)
+      });
+      const data = await response.json();
+      if (data.success) {
+        setShowCreateForm(false);
+        fetchCompetitions();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error('Error creating competition:', error);
+    }
   };
 
   // Edit competition
@@ -311,9 +237,21 @@ const CompetitionManager = () => {
   };
 
   // Delete competition
-  const handleDeleteCompetition = (id) => {
+  const handleDeleteCompetition = async (id) => {
     if (window.confirm('Are you sure you want to delete this competition?')) {
-      setCompetitions(prev => prev.filter(comp => comp.id !== id));
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/admin/competitions/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+          fetchCompetitions();
+        }
+      } catch (error) {
+        console.error('Error deleting competition:', error);
+      }
     }
   };
 
@@ -341,15 +279,38 @@ const CompetitionManager = () => {
   };
 
   // View competition details
-  const handleViewDetails = (comp) => {
-    setSelectedCompetition(comp);
-    setViewMode('details');
+  const handleViewDetails = async (comp) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/competitions/${comp._id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSelectedCompetition(data.data);
+        setViewMode('details');
+      }
+    } catch (error) {
+      console.error('Error fetching competition details:', error);
+    }
   };
 
   // View leaderboard
-  const handleViewLeaderboard = (comp) => {
-    setSelectedCompetition(comp);
-    setViewMode('leaderboard');
+  const handleViewLeaderboard = async (comp) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/competitions/${comp._id}/leaderboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setLeaderboard(data.data);
+        setSelectedCompetition(comp);
+        setViewMode('leaderboard');
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    }
   };
 
   // Format currency
@@ -886,11 +847,11 @@ const CompetitionManager = () => {
                     <div className={styles.detailItem}>
                       <span className={styles.detailLabel}>👥 Participants:</span>
                       <span className={styles.detailValue}>
-                        {competition.participants} / {competition.maxParticipants}
+                        {competition.participantsCount || 0} / {competition.maxParticipants}
                         <div className={styles.progressBar}>
                           <div 
                             className={styles.progressFill}
-                            style={{ width: `${(competition.participants / competition.maxParticipants) * 100}%` }}
+                            style={{ width: `${((competition.participantsCount || 0) / competition.maxParticipants) * 100}%` }}
                           ></div>
                         </div>
                       </span>
@@ -1067,7 +1028,7 @@ const CompetitionManager = () => {
                   </div>
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>Current Participants:</span>
-                    <span>{selectedCompetition.participants}</span>
+                    <span>{selectedCompetition.participantsCount || 0}</span>
                   </div>
                 </div>
               </div>
@@ -1169,8 +1130,8 @@ const CompetitionManager = () => {
               </div>
               
               <div className={styles.tableBody}>
-                {selectedCompetition.leaderboard && selectedCompetition.leaderboard.length > 0 ? (
-                  selectedCompetition.leaderboard.map((player, index) => (
+                {leaderboard && leaderboard.length > 0 ? (
+                  leaderboard.map((player, index) => (
                     <div key={player.rank} className={styles.tableRow}>
                       <div className={styles.tableCell}>
                         <div className={styles.rankCell}>
@@ -1180,12 +1141,12 @@ const CompetitionManager = () => {
                       <div className={styles.tableCell}>
                         <div className={styles.participantCell}>
                           <div className={styles.participantName}>{player.name}</div>
-                          <div className={styles.participantId}>ID: USR{player.rank.toString().padStart(3, '0')}</div>
+                          <div className={styles.participantId}>@{player.username}</div>
                         </div>
                       </div>
                       <div className={styles.tableCell}>
                         <div className={styles.portfolioValue}>
-                          {formatCurrency(selectedCompetition.startingBalance + player.profit)}
+                          {formatCurrency(player.balance + player.profit)}
                         </div>
                       </div>
                       <div className={styles.tableCell}>
@@ -1194,13 +1155,13 @@ const CompetitionManager = () => {
                         </span>
                       </div>
                       <div className={styles.tableCell}>
-                        <span className={`${styles.returnBadge} ${player.return >= 0 ? styles.positive : styles.negative}`}>
-                          {player.return >= 0 ? '+' : ''}{player.return.toFixed(2)}%
+                        <span className={`${styles.returnBadge} ${player.profit >= 0 ? styles.positive : styles.negative}`}>
+                          {player.balance > 0 ? (player.profit / player.balance * 100).toFixed(2) : '0.00'}%
                         </span>
                       </div>
                       <div className={styles.tableCell}>
                         <div className={styles.tradesCount}>
-                          {Math.floor(Math.random() * 50) + 10}
+                          {player.trades}
                         </div>
                       </div>
                     </div>

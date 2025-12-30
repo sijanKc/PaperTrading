@@ -49,104 +49,37 @@ const Reports = () => {
   ];
 
   // Initial reports data
-  const [reports, setReports] = useState([
-    { 
-      id: 1, 
-      name: 'Monthly User Activity Report - January 2024', 
-      type: 'user', 
-      period: 'January 2024', 
-      status: 'generated',
-      size: '2.4 MB',
-      format: 'PDF',
-      generatedAt: '2024-01-31 23:59:59',
-      downloadLink: '#',
-      scheduled: false
-    },
-    { 
-      id: 2, 
-      name: 'Q4 2023 Financial Transaction Summary', 
-      type: 'financial', 
-      period: 'Q4 2023', 
-      status: 'pending',
-      size: '1.8 MB',
-      format: 'Excel',
-      generatedAt: '2024-01-15 10:30:00',
-      downloadLink: '#',
-      scheduled: false
-    },
-    { 
-      id: 3, 
-      name: 'Competition Performance Analysis - Last 30 Days', 
-      type: 'competition', 
-      period: 'Last 30 Days', 
-      status: 'generated',
-      size: '3.2 MB',
-      format: 'PDF',
-      generatedAt: '2024-02-14 14:20:00',
-      downloadLink: '#',
-      scheduled: true
-    },
-    { 
-      id: 4, 
-      name: 'Weekly System Security Audit', 
-      type: 'security', 
-      period: 'Weekly', 
-      status: 'failed',
-      size: 'N/A',
-      format: 'PDF',
-      generatedAt: '2024-02-14 10:00:00',
-      downloadLink: '#',
-      scheduled: true
-    },
-    { 
-      id: 5, 
-      name: 'API Usage Statistics - February 2024', 
-      type: 'system', 
-      period: 'February 2024', 
-      status: 'generated',
-      size: '1.2 MB',
-      format: 'CSV',
-      generatedAt: '2024-02-14 08:45:00',
-      downloadLink: '#',
-      scheduled: false
-    },
-    { 
-      id: 6, 
-      name: 'Daily Trading Volume Report', 
-      type: 'trading', 
-      period: 'Daily', 
-      status: 'generating',
-      size: 'N/A',
-      format: 'PDF',
-      generatedAt: '2024-02-15 09:00:00',
-      downloadLink: '#',
-      scheduled: true
-    },
-    { 
-      id: 7, 
-      name: 'User Registration Trend Analysis', 
-      type: 'user', 
-      period: 'Last 90 Days', 
-      status: 'generated',
-      size: '4.1 MB',
-      format: 'PDF',
-      generatedAt: '2024-02-13 16:30:00',
-      downloadLink: '#',
-      scheduled: false
-    },
-    { 
-      id: 8, 
-      name: 'Competition Prize Distribution Report', 
-      type: 'competition', 
-      period: 'Monthly', 
-      status: 'generated',
-      size: '1.5 MB',
-      format: 'Excel',
-      generatedAt: '2024-02-12 12:00:00',
-      downloadLink: '#',
-      scheduled: true
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch reports from API
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/reports', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setReports(data.reports);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      console.error('Error fetching reports:', err);
+      setError('Failed to load reports');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
   // State management
   const [selectedReportType, setSelectedReportType] = useState('all');
@@ -179,7 +112,7 @@ const Reports = () => {
     const matchesFormat = reportFormat === 'all' || report.format === reportFormat;
     const matchesSearch = searchTerm === '' || 
       report.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.period.toLowerCase().includes(searchTerm.toLowerCase());
+      (report.period && report.period.toLowerCase().includes(searchTerm.toLowerCase()));
     
     return matchesType && matchesFormat && matchesSearch;
   });
@@ -195,7 +128,7 @@ const Reports = () => {
   };
 
   // Handle report generation
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     if (!newReport.name.trim()) {
       alert('Please enter a report name');
       return;
@@ -203,41 +136,46 @@ const Reports = () => {
 
     setIsGenerating(true);
     
-    // Simulate report generation
-    setTimeout(() => {
-      const newReportObj = {
-        id: reports.length + 1,
-        name: newReport.name,
-        type: newReport.type,
-        period: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-        status: 'generated',
-        size: `${(Math.random() * 5).toFixed(1)} MB`,
-        format: newReport.format,
-        generatedAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
-        downloadLink: '#',
-        scheduled: newReport.schedule !== 'once'
-      };
-      
-      setReports(prev => [newReportObj, ...prev]);
-      
-      // Reset form
-      setNewReport({
-        name: '',
-        type: 'user',
-        format: 'PDF',
-        schedule: 'once',
-        scheduleDate: '',
-        scheduleTime: '09:00',
-        emailRecipients: '',
-        includeCharts: true,
-        includeDetails: true
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/reports/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newReport)
       });
-      
+
+      const data = await response.json();
+
+      if (data.success) {
+        setReports(prev => [data.report, ...prev]);
+        
+        // Reset form
+        setNewReport({
+          name: '',
+          type: 'user',
+          format: 'PDF',
+          schedule: 'once',
+          scheduleDate: '',
+          scheduleTime: '09:00',
+          emailRecipients: '',
+          includeCharts: true,
+          includeDetails: true
+        });
+        
+        setSchedulerOpen(false);
+        alert('Report generated successfully!');
+      } else {
+        alert(data.message || 'Failed to generate report');
+      }
+    } catch (err) {
+      console.error('Error generating report:', err);
+      alert('Failed to generate report');
+    } finally {
       setIsGenerating(false);
-      setSchedulerOpen(false);
-      
-      alert('Report generated successfully!');
-    }, 2000);
+    }
   };
 
   // Handle download report
@@ -247,11 +185,31 @@ const Reports = () => {
   };
 
   // Handle delete report
-  const handleDeleteReport = (id) => {
+  const handleDeleteReport = async (id) => {
     if (window.confirm('Are you sure you want to delete this report?')) {
-      setReports(prev => prev.filter(report => report.id !== id));
-      if (selectedReport?.id === id) {
-        setSelectedReport(null);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/reports/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setReports(prev => prev.filter(report => report._id !== id));
+          if (selectedReport?._id === id) {
+            setSelectedReport(null);
+          }
+          alert('Report deleted successfully');
+        } else {
+          alert(data.message || 'Failed to delete report');
+        }
+      } catch (err) {
+        console.error('Error deleting report:', err);
+        alert('Failed to delete report');
       }
     }
   };
@@ -259,12 +217,12 @@ const Reports = () => {
   // Handle retry failed report
   const handleRetryReport = (report) => {
     setReports(prev => prev.map(r => 
-      r.id === report.id ? { ...r, status: 'generating' } : r
+      r._id === report._id ? { ...r, status: 'generating' } : r
     ));
     
     setTimeout(() => {
       setReports(prev => prev.map(r => 
-        r.id === report.id ? { ...r, status: 'generated' } : r
+        r._id === report._id ? { ...r, status: 'generated' } : r
       ));
     }, 3000);
   };
@@ -560,10 +518,11 @@ const Reports = () => {
                 setSelectedReportType('all');
                 setReportFormat('all');
                 setSearchTerm('');
-                setDateRange({ start: '', end: '' });
+                setDateRange({ start: '2024-01-01', end: '2024-02-15' });
+                fetchReports();
               }}
             >
-              🔄 Clear Filters
+              🔄 Refresh Data
             </button>
           </div>
         </div>
@@ -614,11 +573,21 @@ const Reports = () => {
             </div>
             
             <div className={styles.tableBody}>
-              {filteredReports.length > 0 ? (
+              {loading ? (
+                <div className={styles.loadingReports}>
+                  <div className={styles.loader}></div>
+                  <p>Loading reports...</p>
+                </div>
+              ) : error ? (
+                <div className={styles.errorReports}>
+                  <p>{error}</p>
+                  <button onClick={fetchReports}>Retry</button>
+                </div>
+              ) : filteredReports.length > 0 ? (
                 filteredReports.map(report => (
                   <div 
-                    key={report.id} 
-                    className={`${styles.tableRow} ${selectedReport?.id === report.id ? styles.selected : ''}`}
+                    key={report._id} 
+                    className={`${styles.tableRow} ${selectedReport?._id === report._id ? styles.selected : ''}`}
                     onClick={() => setSelectedReport(report)}
                   >
                     <div className={styles.tableCell}>
@@ -695,7 +664,7 @@ const Reports = () => {
                           className={styles.deleteBtn}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteReport(report.id);
+                            handleDeleteReport(report._id);
                           }}
                           title="Delete report"
                         >
@@ -754,7 +723,7 @@ const Reports = () => {
                 <div className={styles.reportDetails}>
                   <div className={styles.detailItem}>
                     <span className={styles.detailLabel}>Report ID:</span>
-                    <span className={styles.detailValue}>#{selectedReport.id}</span>
+                    <span className={styles.detailValue}>#{selectedReport._id.substring(0, 8)}...</span>
                   </div>
                   
                   <div className={styles.detailItem}>

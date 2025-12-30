@@ -8,40 +8,45 @@ import {
 } from 'recharts';
 import styles from '../../admincss/Charts.module.css';
 
-const Charts = () => {
+const Charts = ({ stats }) => {
   const [timeRange, setTimeRange] = useState('7d');
   
-  // User Growth Data (Weekly)
-  const userGrowthData = [
-    { date: 'Day 1', users: 150 },
-    { date: 'Day 2', users: 230 },
-    { date: 'Day 3', users: 350 },
-    { date: 'Day 4', users: 450 },
-    { date: 'Day 5', users: 520 },
-    { date: 'Day 6', users: 610 },
-    { date: 'Day 7', users: 745 }
+  // Format dates for display
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // User Growth Data from backend
+  const userGrowthData = stats?.charts?.userGrowth?.map(item => ({
+    date: formatDate(item._id),
+    users: item.count
+  })) || [
+    { date: 'No Data', users: 0 }
   ];
 
-  // Trading Volume by Hour (NEPSE Trading Hours: 11 AM - 3 PM)
-  const tradingVolumeData = [
-    { hour: '11 AM', volume: 4500000, trades: 120 },
-    { hour: '12 PM', volume: 6200000, trades: 185 },
-    { hour: '1 PM', volume: 7800000, trades: 210 },
-    { hour: '2 PM', volume: 6800000, trades: 175 },
-    { hour: '3 PM', volume: 4200000, trades: 110 }
+  // Trading Volume history from backend
+  const tradingVolumeHistory = stats?.charts?.tradeVolumeHistory?.map(item => ({
+    date: formatDate(item._id),
+    volume: item.volume,
+    trades: item.count
+  })) || [
+    { date: 'No Data', volume: 0, trades: 0 }
   ];
 
+  // Sector-wise Distribution (NEPSE Sectors) - Keep as top sectors or dynamic if possible
+  // For now we'll keep it as high level but we could aggregate by stock sector
   // Sector-wise Distribution (NEPSE Sectors)
-  const sectorData = [
-    { name: 'Commercial Banks', value: 35, color: '#3b82f6' },
-    { name: 'Development Banks', value: 20, color: '#8b5cf6' },
-    { name: 'Finance Companies', value: 15, color: '#10b981' },
-    { name: 'Insurance', value: 12, color: '#f59e0b' },
-    { name: 'Hydro Power', value: 10, color: '#06b6d4' },
-    { name: 'Others', value: 8, color: '#ef4444' }
+  const sectorColors = ['#3b82f6', '#06b6d4', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#ec4899'];
+  const sectorData = stats?.charts?.sectorPerformance?.slice(0, 6).map((s, i) => ({
+    name: s.sector,
+    value: s.stockCount, // Using count for distribution
+    color: sectorColors[i % sectorColors.length]
+  })) || [
+    { name: 'No Data', value: 100, color: '#94a3b8' }
   ];
 
-  // User Performance Distribution
+  // User Performance Distribution (Keeping mock as it requires complex aggregation not yet implemented)
   const performanceData = [
     { range: '>50% Profit', users: 15 },
     { range: '20-50% Profit', users: 45 },
@@ -51,13 +56,12 @@ const Charts = () => {
   ];
 
   // Top 5 NEPSE Stocks
-  const topStocksData = [
-    { symbol: 'NIC', price: 850, change: 2.5, volume: 45678 },
-    { symbol: 'NBL', price: 450, change: 1.8, volume: 34567 },
-    { symbol: 'HIDCL', price: 320, change: -0.5, volume: 23456 },
-    { symbol: 'SCB', price: 680, change: 3.2, volume: 56789 },
-    { symbol: 'NTC', price: 1120, change: 1.2, volume: 12345 }
-  ];
+  const topStocksData = stats?.charts?.topStocks?.map(s => ({
+    symbol: s.symbol,
+    price: s.currentPrice,
+    change: parseFloat(s.changePercent.toFixed(2)),
+    volume: s.volume
+  })) || [];
 
   // Daily Market Sentiment
   const sentimentData = [
@@ -188,21 +192,21 @@ const Charts = () => {
           </div>
           <div className={styles.chartWrapper}>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={tradingVolumeData}>
+              <BarChart data={tradingVolumeHistory}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis 
-                  dataKey="hour" 
+                  dataKey="date" 
                   stroke="#64748b"
                   tick={{ fill: '#64748b' }}
                 />
                 <YAxis 
                   stroke="#64748b"
                   tick={{ fill: '#64748b' }}
-                  tickFormatter={(value) => `₹${(value/1000000).toFixed(1)}M`}
+                  tickFormatter={(value) => `Rs. ${(value/100000).toFixed(1)}L`}
                 />
                 <Tooltip 
                   content={<CustomTooltip />}
-                  formatter={(value) => [`₹${value.toLocaleString()}`, 'Volume']}
+                  formatter={(value) => [`Rs. ${value.toLocaleString()}`, 'Volume']}
                 />
                 <Legend />
                 <Bar
@@ -211,27 +215,21 @@ const Charts = () => {
                   fill="#8b5cf6"
                   radius={[4, 4, 0, 0]}
                 />
-                <Bar
-                  dataKey="trades"
-                  name="Number of Trades"
-                  fill="#10b981"
-                  radius={[4, 4, 0, 0]}
-                />
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div className={styles.chartStats}>
             <div className={styles.statItem}>
-              <span className={styles.statLabel}>Peak Hour</span>
-              <span className={styles.statValue}>1 PM</span>
+              <span className={styles.statLabel}>Avg Daily Vol</span>
+              <span className={styles.statValue}>Rs. {(tradingVolumeHistory.reduce((acc, curr) => acc + curr.volume, 0) / (tradingVolumeHistory.length || 1) / 100000).toFixed(1)}L</span>
             </div>
             <div className={styles.statItem}>
-              <span className={styles.statLabel}>Total Volume</span>
-              <span className={styles.statValue}>₹29.5M</span>
+              <span className={styles.statLabel}>Total Period Vol</span>
+              <span className={styles.statValue}>Rs. {(tradingVolumeHistory.reduce((acc, curr) => acc + curr.volume, 0) / 100000).toFixed(1)}L</span>
             </div>
             <div className={styles.statItem}>
               <span className={styles.statLabel}>Total Trades</span>
-              <span className={styles.statValue}>800</span>
+              <span className={styles.statValue}>{tradingVolumeHistory.reduce((acc, curr) => acc + curr.trades, 0)}</span>
             </div>
           </div>
         </div>
@@ -424,7 +422,7 @@ const Charts = () => {
                   <span className={styles.stockSymbol}>{stock.symbol}</span>
                 </div>
                 <div className={styles.tableCell}>
-                  <span className={styles.stockPrice}>₹{stock.price}</span>
+                  <span className={styles.stockPrice}>Rs. {stock.price.toLocaleString()}</span>
                 </div>
                 <div className={styles.tableCell}>
                   <span className={`${styles.stockChange} ${stock.change > 0 ? styles.positive : styles.negative}`}>
@@ -441,12 +439,12 @@ const Charts = () => {
           </div>
           <div className={styles.chartStats}>
             <div className={styles.statItem}>
-              <span className={styles.statLabel}>Top Gainer</span>
-              <span className={styles.statValuePositive}>SCB +3.2%</span>
+              <span className={styles.statLabel}>Total Stocks</span>
+              <span className={styles.statValue}>{stats?.charts?.topStocks?.length || 0} Traded</span>
             </div>
             <div className={styles.statItem}>
-              <span className={styles.statLabel}>Most Volume</span>
-              <span className={styles.statValue}>SCB</span>
+              <span className={styles.statLabel}>Top Volume</span>
+              <span className={styles.statValue}>{topStocksData[0]?.symbol || 'N/A'}</span>
             </div>
           </div>
         </div>
@@ -463,29 +461,29 @@ const Charts = () => {
           <div className={styles.insightCard}>
             <div className={styles.insightIcon}>📊</div>
             <div className={styles.insightContent}>
-              <h4>Strong User Growth</h4>
-              <p>396% increase in new users this week, indicating growing interest in paper trading.</p>
+              <h4>Positive User Growth</h4>
+              <p>{stats?.users?.newToday || 0} new users joined today, contributing to a total of {stats?.users?.total || 0} registered traders.</p>
             </div>
           </div>
           <div className={styles.insightCard}>
             <div className={styles.insightIcon}>⏰</div>
             <div className={styles.insightContent}>
-              <h4>Peak Trading at 1 PM</h4>
-              <p>Maximum trading volume observed during lunch hours (1-2 PM).</p>
+              <h4>Trading Pattern</h4>
+              <p>Platform volume is currently {stats?.trading?.todayVolume > 0 ? 'active' : 'idle'} with {stats?.trading?.totalTrades || 0} total trades executed.</p>
             </div>
           </div>
           <div className={styles.insightCard}>
             <div className={styles.insightIcon}>🏦</div>
             <div className={styles.insightContent}>
-              <h4>Banking Sector Dominates</h4>
-              <p>Commercial banks account for 35% of all trading activity.</p>
+              <h4>{sectorData[0]?.name || 'Market'} Leading</h4>
+              <p>{sectorData[0]?.name || 'Various'} sector accounts for most of the trading activity on the platform.</p>
             </div>
           </div>
           <div className={styles.insightCard}>
             <div className={styles.insightIcon}>😊</div>
             <div className={styles.insightContent}>
-              <h4>Bullish Sentiment</h4>
-              <p>65% average bullish sentiment with peaks on Fridays.</p>
+              <h4>Market Health</h4>
+              <p>System is currently {stats?.system?.status || 'operational'} with {stats?.users?.online || 0} users live right now.</p>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Spinner, Alert } from 'react-bootstrap';
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
+import api from '../../services/api';
 import styles from './css/TradingJournal.module.css';
 
 const TradingJournal = () => {
@@ -31,34 +32,26 @@ const TradingJournal = () => {
     strategy: "Swing Trading"
   });
 
-  const fetchJournalData = async () => {
+  const fetchJournalData = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('Please login to view journal');
-
-      const response = await fetch('http://localhost:5000/api/journal/entries', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch journal entries');
-
-      const result = await response.json();
-      if (result.success) {
-        setTrades(result.data.entries);
-        setStats(result.data.stats);
+      setError(null);
+      const response = await api.get('/journal/entries');
+      if (response.data.success) {
+        setTrades(response.data.data.entries);
+        setStats(response.data.data.stats);
       }
     } catch (err) {
       console.error('Journal fetch error:', err);
-      setError(err.message);
+      setError(err.response?.data?.message || 'Failed to fetch journal entries');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchJournalData();
-  }, []);
+  }, [fetchJournalData]);
 
   const handleInputChange = (field, value) => {
     setNewTrade(prev => ({
@@ -69,20 +62,8 @@ const TradingJournal = () => {
 
   const addTrade = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/journal/entries', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newTrade)
-      });
-
-      if (!response.ok) throw new Error('Failed to add trade');
-
-      const result = await response.json();
-      if (result.success) {
+      const response = await api.post('/journal/entries', newTrade);
+      if (response.data.success) {
         fetchJournalData(); // Refresh data
         setShowAddTrade(false);
         setNewTrade({
@@ -99,7 +80,7 @@ const TradingJournal = () => {
       }
     } catch (err) {
       console.error('Add trade error:', err);
-      alert('Failed to add trade: ' + err.message);
+      alert('Failed to add trade: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -107,18 +88,9 @@ const TradingJournal = () => {
     if (!window.confirm('Are you sure you want to delete this trade?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/journal/entries/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!response.ok) throw new Error('Failed to delete trade');
-
-      const result = await response.json();
-      if (result.success) {
-        setTrades(prev => prev.filter(trade => trade.id !== id));
-        // Optionally refresh stats here
+      const response = await api.delete(`/journal/entries/${id}`);
+      if (response.data.success) {
+        // Optimistic update or refresh
         fetchJournalData();
       }
     } catch (err) {
@@ -137,6 +109,11 @@ const TradingJournal = () => {
 
   const getTypeBadge = (type) => {
     return type === "Buy" ? styles.typeBuy : styles.typeSell;
+  };
+
+  const formatCurrency = (amount) => {
+    if (amount === undefined || amount === null) return 'Rs. 0.00';
+    return `Rs. ${amount.toLocaleString('en-NP', { minimumFractionDigits: 2 })}`;
   };
 
   const TradeForm = () => (
@@ -180,7 +157,7 @@ const TradingJournal = () => {
         </div>
 
         <div className={styles.formGroup}>
-          <label>Entry Price (Nrs)</label>
+          <label>Entry Price (Rs.)</label>
           <input
             type="number"
             value={newTrade.entryPrice}
@@ -191,7 +168,7 @@ const TradingJournal = () => {
         </div>
 
         <div className={styles.formGroup}>
-          <label>Exit Price (Nrs)</label>
+          <label>Exit Price (Rs.)</label>
           <input
             type="number"
             value={newTrade.exitPrice}
@@ -278,7 +255,7 @@ const TradingJournal = () => {
           <div className={styles.statIcon}>💰</div>
           <div className={styles.statContent}>
             <h3 className={getProfitColor(stats.totalProfit)}>
-              {stats.totalProfit >= 0 ? '+' : ''}Nrs. {stats.totalProfit.toLocaleString()}
+              {stats.totalProfit >= 0 ? '+' : ''}{formatCurrency(stats.totalProfit)}
             </h3>
             <p>Total P&L</p>
           </div>
@@ -314,7 +291,7 @@ const TradingJournal = () => {
           </thead>
           <tbody>
             {trades.map((trade) => (
-              <tr key={trade.id} className={styles.tableRow}>
+              <tr key={trade.id || trade._id} className={styles.tableRow}>
                 <td className={styles.tableCell}>
                   <div className={styles.symbolCell}>
                     <span className={styles.symbol}>{trade.symbol}</span>
@@ -327,13 +304,13 @@ const TradingJournal = () => {
                   </span>
                 </td>
                 <td className={styles.tableCell}>{trade.quantity}</td>
-                <td className={styles.tableCell}>Nrs. {trade.entryPrice}</td>
+                <td className={styles.tableCell}>{formatCurrency(trade.entryPrice)}</td>
                 <td className={styles.tableCell}>
-                  {trade.exitPrice ? `Nrs. ${trade.exitPrice}` : '-'}
+                  {trade.exitPrice ? formatCurrency(trade.exitPrice) : '-'}
                 </td>
                 <td className={styles.tableCell}>
                   <div className={`${styles.plCell} ${getProfitColor(trade.profitLoss)}`}>
-                    {trade.profitLoss >= 0 ? '+' : ''}Nrs. {trade.profitLoss.toLocaleString()}
+                    {trade.profitLoss >= 0 ? '+' : ''}{formatCurrency(trade.profitLoss)}
                     {trade.profitLossPercent && (
                       <span className={styles.plPercent}>
                         ({trade.profitLossPercent >= 0 ? '+' : ''}{trade.profitLossPercent.toFixed(2)}%)
@@ -359,7 +336,7 @@ const TradingJournal = () => {
                     </button>
                     <button 
                       className={styles.deleteButton}
-                      onClick={() => deleteTrade(trade.id)}
+                      onClick={() => deleteTrade(trade.id || trade._id)}
                       title="Delete Trade"
                     >
                       🗑️
@@ -388,7 +365,7 @@ const TradingJournal = () => {
     </div>
   );
 
-  const Analytics = () => (
+  const AnalyticsSection = () => (
     <div className={styles.analytics}>
       <h3>Performance Analytics</h3>
       
@@ -429,7 +406,7 @@ const TradingJournal = () => {
                 <div key={strategy} className={styles.strategyItem}>
                   <span className={styles.strategyName}>{strategy}</span>
                   <span className={getProfitColor(strategyProfit)}>
-                    Nrs. {strategyProfit.toLocaleString()}
+                    {formatCurrency(strategyProfit)}
                   </span>
                   <span className={styles.tradeCount}>({strategyTrades.length} trades)</span>
                 </div>
@@ -528,7 +505,7 @@ const TradingJournal = () => {
 
                   {activeTab === 'analytics' && (
                     <div className={styles.analyticsTab}>
-                      <Analytics />
+                      <AnalyticsSection />
                     </div>
                   )}
 

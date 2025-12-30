@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Spinner, Alert } from 'react-bootstrap';
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
+import api from '../../services/api';
 import styles from './css/Settings.module.css';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  
   const [settings, setSettings] = useState({
     // General Settings
     theme: 'light',
@@ -37,9 +44,49 @@ const Settings = () => {
     
     // Account Settings
     twoFactorAuth: false,
-    sessionTimeout: 30,
-    exportData: false
+    sessionTimeout: 30
   });
+
+  const fetchSettings = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/settings');
+      if (response.data.success) {
+        setSettings(prev => ({
+          ...prev,
+          ...response.data.data
+        }));
+        
+        // Apply theme if it was fetched
+        applyTheme(response.data.data.theme);
+      }
+    } catch (err) {
+      console.error('Error fetching settings:', err);
+      setError('Failed to load settings. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const applyTheme = (theme) => {
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-bs-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    } else if (theme === 'light') {
+      document.documentElement.setAttribute('data-bs-theme', 'light');
+      localStorage.setItem('theme', 'light');
+    } else {
+      // Auto
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-bs-theme', prefersDark ? 'dark' : 'light');
+      localStorage.setItem('theme', 'auto');
+    }
+  };
 
   const handleSettingChange = (category, field, value) => {
     setSettings(prev => ({
@@ -48,42 +95,60 @@ const Settings = () => {
     }));
   };
 
-  const saveSettings = () => {
-    // Simulate API call to save settings
-    alert('Settings saved successfully!');
-  };
-
-  const resetSettings = () => {
-    if (window.confirm('Are you sure you want to reset all settings to default?')) {
-      setSettings({
-        theme: 'light',
-        language: 'english',
-        currency: 'npr',
-        timezone: 'Asia/Kathmandu',
-        notifications: true,
-        autoRefresh: true,
-        defaultOrderType: 'market',
-        defaultQuantity: 10,
-        confirmOrders: true,
-        stopLossDefault: 2,
-        takeProfitDefault: 5,
-        emailNotifications: true,
-        pushNotifications: false,
-        priceAlerts: true,
-        tradeExecutions: true,
-        portfolioUpdates: true,
-        newsUpdates: false,
-        profileVisibility: 'public',
-        showPortfolioValue: true,
-        showTradingActivity: false,
-        dataSharing: true,
-        twoFactorAuth: false,
-        sessionTimeout: 30,
-        exportData: false
-      });
-      alert('Settings reset to default values!');
+  const saveSettings = async () => {
+    setIsSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      const response = await api.put('/settings', settings);
+      if (response.data.success) {
+        setSuccessMessage('Settings saved successfully!');
+        applyTheme(settings.theme);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      setError('Failed to save settings. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const resetSettings = async () => {
+    if (window.confirm('Are you sure you want to reset all settings to default?')) {
+      setIsSaving(true);
+      setError(null);
+      try {
+        const response = await api.post('/settings/reset');
+        if (response.data.success) {
+          setSettings(response.data.data);
+          applyTheme(response.data.data.theme);
+          setSuccessMessage('Settings reset to default!');
+          setTimeout(() => setSuccessMessage(null), 3000);
+        }
+      } catch (err) {
+        console.error('Error resetting settings:', err);
+        setError('Failed to reset settings.');
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className={styles.dashboardContainer}>
+        <Sidebar />
+        <div className={styles.dashboardMain}>
+          <Header />
+          <div className={styles.loadingContainer}>
+            <Spinner animation="border" variant="primary" />
+            <p className="mt-2">Loading settings...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const GeneralSettings = () => (
     <div className={styles.settingsSection}>
@@ -126,7 +191,7 @@ const Settings = () => {
             onChange={(e) => handleSettingChange('general', 'currency', e.target.value)}
             className={styles.settingInput}
           >
-            <option value="npr">NPR - Nepalese Rupee</option>
+            <option value="npr">NPR - Nepalese Rupee (Rs.)</option>
             <option value="usd">USD - US Dollar</option>
             <option value="inr">INR - Indian Rupee</option>
           </select>
@@ -529,6 +594,9 @@ const Settings = () => {
             <p>Customize your SANCHAYA experience</p>
           </div>
 
+          {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
+          {successMessage && <Alert variant="success" dismissible onClose={() => setSuccessMessage(null)}>{successMessage}</Alert>}
+
           <div className={styles.settingsLayout}>
             {/* Sidebar Navigation */}
             <div className={styles.settingsSidebar}>
@@ -574,10 +642,10 @@ const Settings = () => {
               </div>
 
               <div className={styles.sidebarActions}>
-                <button className={styles.saveButton} onClick={saveSettings}>
-                  💾 Save Changes
+                <button className={styles.saveButton} onClick={saveSettings} disabled={isSaving}>
+                  {isSaving ? <Spinner animation="border" size="sm" /> : '💾 Save Changes'}
                 </button>
-                <button className={styles.resetButton} onClick={resetSettings}>
+                <button className={styles.resetButton} onClick={resetSettings} disabled={isSaving}>
                   🔄 Reset to Default
                 </button>
               </div>

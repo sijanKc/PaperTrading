@@ -1,68 +1,79 @@
 import React from 'react';
 import styles from '../../admincss/StatsCards.module.css';
 
-const StatsCards = () => {
+const StatsCards = ({ stats }) => {
+  // Safe access to stats
+  const userStats = stats?.users || { total: 0, active: 0, online: 0, pending: 0, newToday: 0 };
+  const tradeStats = stats?.trading || { totalTrades: 0, todayVolume: 0, activeTradesDay: 0 };
+
+  // Format volume (e.g., 1.2M, 500K)
+  const formatVolume = (vol) => {
+    if (vol >= 10000000) return `Rs. ${(vol / 10000000).toFixed(2)} Cr`;
+    if (vol >= 100000) return `Rs. ${(vol / 100000).toFixed(2)} L`;
+    return `Rs. ${vol.toLocaleString()}`;
+  };
+
   // NEPSE specific data
   const statsData = [
     {
       id: 1,
-      title: 'NEPSE Index',
-      value: '2,145.67',
-      change: '+45.32',
-      changePercent: '+2.16%',
-      icon: '📈',
-      color: 'green',
-      description: 'Current NEPSE Index'
+      title: 'Total Users',
+      value: userStats.total.toLocaleString(),
+      change: `+${userStats.newToday}`,
+      changePercent: `${((userStats.newToday / (userStats.total || 1)) * 100).toFixed(1)}%`,
+      icon: '👥',
+      color: 'blue',
+      description: 'Total Registered Traders'
     },
     {
       id: 2,
-      title: 'Total Users',
-      value: '1,234',
-      change: '+45',
-      changePercent: '+3.78%',
-      icon: '👥',
-      color: 'blue',
-      description: 'Active Paper Traders'
+      title: 'Online Users',
+      value: userStats.online.toLocaleString(),
+      change: `+${userStats.online}`,
+      changePercent: 'Live',
+      icon: '🟢',
+      color: 'green',
+      description: 'Active in last 15 mins'
     },
     {
       id: 3,
-      title: 'Today\'s Volume',
-      value: '₹4.2 Cr',
-      change: '+0.5 Cr',
-      changePercent: '+13.5%',
-      icon: '💰',
-      color: 'purple',
-      description: 'Total Trading Volume'
+      title: 'Pending Approvals',
+      value: userStats.pending.toLocaleString(),
+      change: userStats.pending > 0 ? 'Action' : 'Clean',
+      changePercent: 'Users',
+      icon: '⏳',
+      color: 'orange',
+      description: 'Waiting for admin'
     },
     {
       id: 4,
-      title: 'Active Trades',
-      value: '567',
-      change: '-23',
-      changePercent: '-3.9%',
-      icon: '⚡',
-      color: 'orange',
-      description: 'Trades in Last 24h'
+      title: 'Today\'s Volume',
+      value: formatVolume(tradeStats.todayVolume),
+      change: tradeStats.todayVolume > 0 ? 'Dynamic' : 'None',
+      changePercent: 'Market',
+      icon: '💰',
+      color: 'purple',
+      description: 'Total Value Traded'
     },
     {
       id: 5,
-      title: 'Top Sector',
-      value: 'Banking',
-      change: '+12.5%',
-      changePercent: '+12.5%',
-      icon: '🏦',
-      color: 'teal',
-      description: 'Commercial Banks'
+      title: 'Total Trades',
+      value: tradeStats.totalTrades.toLocaleString(),
+      change: `+${tradeStats.activeTradesDay}`,
+      changePercent: 'Today',
+      icon: '⚡',
+      color: 'indigo',
+      description: 'Lifetime executions'
     },
     {
       id: 6,
-      title: 'Avg. Portfolio',
-      value: '₹2.5L',
-      change: '+₹25,000',
-      changePercent: '+11.1%',
-      icon: '📊',
-      color: 'indigo',
-      description: 'Per User Average'
+      title: 'System Uptime',
+      value: '99.9%',
+      change: 'Normal',
+      changePercent: 'Status',
+      icon: '🛡️',
+      color: 'teal',
+      description: 'Service availability'
     }
   ];
 
@@ -104,7 +115,7 @@ const StatsCards = () => {
             </div>
             
             <div className={styles.cardFooter}>
-              <span className={styles.timestamp}>Updated 5 min ago</span>
+              <span className={styles.timestamp}>Real-time data</span>
             </div>
           </div>
         ))}

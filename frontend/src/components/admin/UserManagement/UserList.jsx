@@ -88,9 +88,11 @@ const UserList = () => {
         setStats({
           total: data.stats.users.total || 0,
           active: data.stats.users.active || 0,
-          pending: data.stats.users.pending || 0, // New from backend
-          suspended: 0, // Can derive or fetch separately if needed
-          banned: 0
+          pending: data.stats.users.pending || 0,
+          suspended: data.stats.users.suspended || 0,
+          premium: data.stats.users.premium || 0,
+          admins: data.stats.users.admins || 0,
+          banned: 0 // Derivable if added to backend
         });
       }
     } catch (error) {
@@ -135,10 +137,35 @@ const UserList = () => {
   };
 
   const handleSaveUser = async (userData) => {
-    // Implement API call to save/update user if needed
-    console.log('Save user:', userData); // Placeholder - add PUT /api/admin/users/:id
-    setIsModalOpen(false);
-    fetchUsers(); // Refresh after save
+    try {
+      const token = localStorage.getItem('token');
+      const isEdit = userData.id;
+      const url = isEdit 
+        ? `http://localhost:5000/api/admin/users/${userData.id}` 
+        : 'http://localhost:5000/api/admin/users';
+      
+      const response = await fetch(url, {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        alert(isEdit ? 'User updated successfully!' : 'User created successfully!');
+        setIsModalOpen(false);
+        fetchUsers();
+        fetchStats();
+      } else {
+        alert(data.message || 'Failed to save user.');
+      }
+    } catch (error) {
+      console.error('Error saving user:', error);
+      alert('Error connecting to server.');
+    }
   };
 
   // New: Handle approve/reject individual user
@@ -167,28 +194,79 @@ const UserList = () => {
     }
   };
 
-  const handleSuspendUser = (userId) => {
-    if (window.confirm('Suspend this user?')) {
-      // Implement API call to /api/admin/users/:id/status {status: 'suspended'}
-      console.log('Suspend user:', userId); // Placeholder
-      fetchUsers();
+  const handleSuspendUser = async (userId) => {
+    const reason = window.prompt('Enter reason for suspension:');
+    if (reason === null) return; // Cancelled
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'suspended', reason })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('User suspended successfully.');
+        fetchUsers();
+      } else {
+        alert(data.message || 'Failed to suspend user.');
+      }
+    } catch (error) {
+      console.error('Error suspending user:', error);
     }
   };
 
-  const handleBanUser = (userId) => {
-    if (window.confirm('Ban this user permanently?')) {
-      // Implement API call to /api/admin/users/:id/status {status: 'banned'}
-      console.log('Ban user:', userId); // Placeholder
-      fetchUsers();
+  const handleBanUser = async (userId) => {
+    const reason = window.prompt('Enter reason for ban:');
+    if (reason === null) return; // Cancelled
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'banned', reason })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('User banned permanently.');
+        fetchUsers();
+      } else {
+        alert(data.message || 'Failed to ban user.');
+      }
+    } catch (error) {
+      console.error('Error banning user:', error);
     }
   };
 
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     if (window.confirm('Delete this user account? This action cannot be undone.')) {
-      // Implement DELETE /api/admin/users/:id
-      console.log('Delete user:', userId); // Placeholder
-      fetchUsers();
-      setSelectedUsers(prev => prev.filter(id => id !== userId));
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert('User deleted successfully.');
+          fetchUsers();
+          setSelectedUsers(prev => prev.filter(id => id !== userId));
+        } else {
+          alert(data.message || 'Failed to delete user.');
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+      }
     }
   };
 
@@ -215,9 +293,30 @@ const UserList = () => {
         for (const userId of selectedUsers) {
           await handleApproveUser(userId, approve);
         }
-      } else {
-        // Other actions: Implement bulk API if available, else loop
-        console.log(`Bulk ${action}:`, selectedUsers); // Placeholder
+      } else if (action === 'delete') {
+        for (const userId of selectedUsers) {
+          await handleDeleteUser(userId);
+        }
+      } else if (['suspend', 'ban', 'activate'].includes(action)) {
+        const status = action === 'activate' ? 'active' : (action === 'suspend' ? 'suspended' : 'banned');
+        const reason = (status !== 'active') ? window.prompt(`Enter reason for bulk ${action}:`) : '';
+        if (status !== 'active' && reason === null) return;
+
+        for (const userId of selectedUsers) {
+          try {
+            const token = localStorage.getItem('token');
+            await fetch(`http://localhost:5000/api/admin/users/${userId}/status`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ status, reason })
+            });
+          } catch (error) {
+            console.error(`Error in bulk ${action} for ${userId}:`, error);
+          }
+        }
       }
       setSelectedUsers([]);
       fetchUsers();

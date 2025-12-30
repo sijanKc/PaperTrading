@@ -19,17 +19,20 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Passwords do not match' });
     }
 
-    // Check duplicates
-    const existingUser = await User.findOne({
-      $or: [
-        { 'contact.email': email },
-        { username },
-        { citizenNo }
-      ]
-    });
+    // Check duplicates specifically
+    const emailExists = await User.findOne({ 'contact.email': email });
+    if (emailExists) {
+      return res.status(400).json({ success: false, message: 'This Email is already registered' });
+    }
 
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Email, username, or citizenship number already exists' });
+    const usernameExists = await User.findOne({ username });
+    if (usernameExists) {
+      return res.status(400).json({ success: false, message: 'This Username is already taken' });
+    }
+
+    const citizenNoExists = await User.findOne({ citizenNo });
+    if (citizenNoExists) {
+      return res.status(400).json({ success: false, message: 'This Citizenship Number is already registered' });
     }
 
     // Hash password
@@ -62,12 +65,6 @@ const register = async (req, res) => {
     // Send activation email (Disabled for direct Admin Approval flow)
     // const activationUrl = `${process.env.FRONTEND_URL}/activate/${token}`;
     // const emailResult = await sendActivationEmail(email, activationUrl);
-
-    if (!emailResult.success) {
-      // Optional: delete user if email fails?
-      // await User.findByIdAndDelete(user._id);
-      // return res.status(500).json({ message: 'Failed to send activation email' });
-    }
 
     res.status(201).json({
       success: true,
@@ -111,7 +108,7 @@ const activateAccount = async (req, res) => {
 // Updated Login (block unverified or unapproved)
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, rememberMe } = req.body;
 
     const user = await User.findOne({
       $or: [{ username }, { 'contact.email': username }]
@@ -133,7 +130,8 @@ const login = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Account suspended' });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const tokenExpiry = rememberMe ? '30d' : '24h';
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: tokenExpiry });
 
     res.json({
       success: true,

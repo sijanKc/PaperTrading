@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Spinner, Alert } from 'react-bootstrap';
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
-import styles from './css/StrategyTester.module.css';
 import api from '../../services/api';
+import styles from './css/StrategyTester.module.css';
 
 const StrategyTester = () => {
   const [activeTab, setActiveTab] = useState('backtest');
+  const [stocks, setStocks] = useState([]);
   const [strategy, setStrategy] = useState({
     name: 'Moving Average Crossover',
     symbol: 'NTC',
@@ -26,6 +28,25 @@ const StrategyTester = () => {
   const [error, setError] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Fetch stocks for the dropdown
+  const fetchStocks = useCallback(async () => {
+    try {
+      const response = await api.get('/stocks');
+      if (response.data.success) {
+        setStocks(response.data.data);
+        if (response.data.data.length > 0 && !strategy.symbol) {
+          setStrategy(prev => ({ ...prev, symbol: response.data.data[0].symbol }));
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching stocks:', err);
+    }
+  }, [strategy.symbol]);
+
+  useEffect(() => {
+    fetchStocks();
+  }, [fetchStocks]);
+
   useEffect(() => {
     if (activeTab === 'strategies') {
       fetchSavedStrategies();
@@ -34,6 +55,7 @@ const StrategyTester = () => {
 
   const fetchSavedStrategies = async () => {
     setIsLoadingStrategies(true);
+    setError(null);
     try {
       const response = await api.get('/strategy/user');
       if (response.data.success) {
@@ -41,7 +63,7 @@ const StrategyTester = () => {
       }
     } catch (err) {
       console.error('Error fetching strategies:', err);
-      setError('Failed to load strategies');
+      setError('Failed to load saved strategies');
     } finally {
       setIsLoadingStrategies(false);
     }
@@ -66,7 +88,7 @@ const StrategyTester = () => {
       }
     } catch (err) {
       console.error('Backtest error:', err);
-      setError(err.response?.data?.message || 'Error running backtest');
+      setError(err.response?.data?.message || 'Error running backtest analysis');
     } finally {
       setIsTesting(false);
     }
@@ -105,6 +127,11 @@ const StrategyTester = () => {
     return styles.performancePoor;
   };
 
+  const formatCurrency = (amount) => {
+    if (amount === undefined || amount === null) return 'Rs. 0.00';
+    return `Rs. ${amount.toLocaleString('en-NP', { minimumFractionDigits: 2 })}`;
+  };
+
   const StrategyForm = () => (
     <div className={styles.strategyForm}>
       <div className={styles.formGrid}>
@@ -124,11 +151,17 @@ const StrategyTester = () => {
             value={strategy.symbol}
             onChange={(e) => handleInputChange('symbol', e.target.value)}
           >
-            <option value="NTC">NTC</option>
-            <option value="NABIL">NABIL</option>
-            <option value="SCB">SCB</option>
-            <option value="NICA">NICA</option>
-            <option value="NIB">NIB</option>
+            {stocks.length > 0 ? (
+              stocks.map(s => (
+                <option key={s._id} value={s.symbol}>{s.symbol} - {s.name}</option>
+              ))
+            ) : (
+              <>
+                <option value="NTC">NTC</option>
+                <option value="NABIL">NABIL</option>
+                <option value="SCB">SCB</option>
+              </>
+            )}
           </select>
         </div>
 
@@ -146,7 +179,7 @@ const StrategyTester = () => {
         </div>
 
         <div className={styles.formGroup}>
-          <label>Initial Capital (Nrs)</label>
+          <label>Initial Capital (Rs.)</label>
           <input
             type="number"
             value={strategy.initialCapital}
@@ -233,14 +266,14 @@ const StrategyTester = () => {
       >
         {isTesting ? (
           <>
-            <div className={styles.spinner}></div>
+            <Spinner animation="border" size="sm" className="me-2" />
             Running Backtest...
           </>
         ) : (
           '🚀 Run Backtest'
         )}
       </button>
-      {error && <div className={styles.errorMessage}>{error}</div>}
+      {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
     </div>
   );
 
@@ -250,7 +283,7 @@ const StrategyTester = () => {
         <div className={styles.overviewCard}>
           <div className={styles.overviewIcon}>📊</div>
           <div className={styles.overviewContent}>
-            <h3>{testResults.totalReturn >= 0 ? '+' : ''}Nrs. {testResults.totalReturn.toLocaleString()}</h3>
+            <h3>{testResults.totalReturn >= 0 ? '+' : ''}{formatCurrency(testResults.totalProfit || testResults.totalReturn)}</h3>
             <p>Total Return</p>
             <span className={getProfitColor(testResults.totalReturn)}>
               {testResults.returnPercent}%
@@ -314,7 +347,7 @@ const StrategyTester = () => {
           <div className={styles.metricHeader}>
             <span className={styles.metricTitle}>Avg. Win / Loss</span>
             <span className={getProfitColor(testResults.avgWin)}>
-              Nrs. {testResults.avgWin} / Nrs. {Math.abs(testResults.avgLoss)}
+              {formatCurrency(testResults.avgWin)} / {formatCurrency(Math.abs(testResults.avgLoss))}
             </span>
           </div>
           <div className={styles.metricDescription}>
@@ -326,7 +359,7 @@ const StrategyTester = () => {
           <div className={styles.metricHeader}>
             <span className={styles.metricTitle}>Best Trade</span>
             <span className={styles.textSuccess}>
-              +Nrs. {testResults.bestTrade}
+              +{formatCurrency(testResults.bestTrade)}
             </span>
           </div>
           <div className={styles.metricDescription}>
@@ -338,7 +371,7 @@ const StrategyTester = () => {
           <div className={styles.metricHeader}>
             <span className={styles.metricTitle}>Worst Trade</span>
             <span className={styles.textDanger}>
-              Nrs. {testResults.worstTrade}
+              -{formatCurrency(Math.abs(testResults.worstTrade))}
             </span>
           </div>
           <div className={styles.metricDescription}>
@@ -365,7 +398,7 @@ const StrategyTester = () => {
               <div 
                 className={`${styles.barFill} ${getProfitColor(month.return)}`}
                 style={{ 
-                  width: `${Math.min(Math.abs(month.return) * 10, 100)}%`,
+                  width: `${Math.min(Math.max(Math.abs(month.return) * 5, 2), 100)}%`,
                   height: '20px'
                 }}
               ></div>
@@ -386,7 +419,7 @@ const StrategyTester = () => {
         <main className={styles.strategyTesterContainer}>
           {/* Header */}
           <div className={styles.header}>
-            <h1>🔬 Strategy Tester</h1>
+            <h1>📓 Strategy Tester</h1>
             <p>Test your trading strategies with historical data</p>
           </div>
 
@@ -409,7 +442,7 @@ const StrategyTester = () => {
                 onClick={() => setActiveTab('results')}
                 className={`${styles.tabButton} ${activeTab === 'results' ? styles.tabButtonActive : ''}`}
               >
-                📈 Results
+                📈 History
               </button>
             </div>
 
@@ -427,8 +460,8 @@ const StrategyTester = () => {
                       <h3>Backtest Results</h3>
                       {isTesting ? (
                         <div className={styles.loadingState}>
-                          <div className={styles.loadingSpinner}></div>
-                          <p>Running backtest analysis...</p>
+                          <Spinner animation="border" variant="primary" />
+                          <p className="mt-3">Running backtest analysis...</p>
                           <p className={styles.loadingText}>This may take a few seconds</p>
                         </div>
                       ) : testResults ? (
@@ -463,16 +496,19 @@ const StrategyTester = () => {
 
               {activeTab === 'strategies' && (
                 <div className={styles.strategiesTab}>
-                  <h3>Saved Strategies</h3>
+                  <div className={styles.tabHeader}>
+                    <h3>Saved Strategies</h3>
+                    <button className="btn btn-sm btn-outline-primary" onClick={fetchSavedStrategies}>🔄 Refresh</button>
+                  </div>
                   {isLoadingStrategies ? (
                     <div className={styles.loadingState}>
-                       <div className={styles.loadingSpinner}></div>
-                       <p>Loading strategies...</p>
+                       <Spinner animation="border" variant="primary" />
+                       <p className="mt-3">Loading strategies...</p>
                     </div>
                   ) : savedStrategies.length > 0 ? (
                     <div className={styles.strategiesList}>
                       {savedStrategies.map(strat => (
-                        <div key={strat.id} className={styles.strategyItem}>
+                        <div key={strat.id || strat._id} className={styles.strategyItem}>
                           <div className={styles.strategyHeader}>
                             <h4>{strat.name}</h4>
                             <span className={styles.strategyBadge}>{strat.isActive ? 'Active' : 'Inactive'}</span>
@@ -480,11 +516,17 @@ const StrategyTester = () => {
                           <p>{strat.symbol} • {strat.timeframe} • Fast MA: {strat.parameters.fastMA}, Slow MA: {strat.parameters.slowMA}</p>
                           <div className={styles.strategyStats}>
                             <span>Win Rate: {strat.results?.winRate}%</span>
-                            <span>Total Return: {strat.results?.totalReturn}%</span>
-                            <span>Last Test: {new Date(strat.results?.lastTest || Date.now()).toLocaleDateString()}</span>
+                            <span>Total Return: {strat.results?.totalReturn >= 0 ? '+' : ''}{strat.results?.totalReturn}%</span>
+                            <span>Last Test: {new Date(strat.results?.lastTest || strat.createdAt || Date.now()).toLocaleDateString()}</span>
                           </div>
                           <div className={styles.strategyActions}>
-                            <button className={styles.actionButton}>Test Again</button>
+                            <button className={styles.actionButton} onClick={() => {
+                              setStrategy({
+                                ...strat,
+                                ...strat.parameters
+                              });
+                              setActiveTab('backtest');
+                            }}>Load & Test</button>
                             <button className={styles.actionButton}>Edit</button>
                             <button className={styles.deleteButton}>Delete</button>
                           </div>
@@ -493,7 +535,9 @@ const StrategyTester = () => {
                     </div>
                   ) : (
                     <div className={styles.placeholderState}>
-                      <p>No saved strategies found.</p>
+                      <div className={styles.placeholderIcon}>💡</div>
+                      <h4>No Saved Strategies</h4>
+                      <p>Tested strategies you save will appear here for quick access.</p>
                     </div>
                   )}
                 </div>
@@ -503,12 +547,12 @@ const StrategyTester = () => {
                 <div className={styles.resultsTab}>
                   <h3>Historical Results</h3>
                   <div className={styles.resultsHistory}>
-                    <p>Your previous backtest results will appear here.</p>
+                    <p>Your previous backtest results and performance history.</p>
                     <div className={styles.chartPlaceholder}>
                       <div className={styles.placeholderContent}>
                         <div className={styles.placeholderIcon}>📈</div>
                         <p>Performance Over Time</p>
-                        <p>Chart showing strategy performance across different tests</p>
+                        <p>Detailed performance charts will be available in future updates</p>
                       </div>
                     </div>
                   </div>

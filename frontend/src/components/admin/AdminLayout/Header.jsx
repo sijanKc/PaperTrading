@@ -12,6 +12,51 @@ const Header = ({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [adminData, setAdminData] = useState(null);
+  const [stats, setStats] = useState({
+    users: { total: 0, active: 0, pending: 0, online: 0 }
+  });
+  const [notifications, setNotifications] = useState([]);
+
+  // Fetch stats and user info
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    setAdminData(user);
+
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/admin/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setStats(data.stats);
+          
+          // Generate notification for pending approvals
+          const newNotifications = [];
+          if (data.stats.users.pending > 0) {
+            newNotifications.push({
+              id: 'pending',
+              type: 'warning',
+              message: `${data.stats.users.pending} users waiting for approval`,
+              time: 'Action required'
+            });
+          }
+          
+          // Add some default system info
+          newNotifications.push({ id: 1, type: 'info', message: 'System is healthy', time: 'Just now' });
+          setNotifications(newNotifications);
+        }
+      } catch (error) {
+        console.error('Error fetching admin header stats:', error);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000); // Update every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   // Update current time every minute
   useEffect(() => {
@@ -21,6 +66,14 @@ const Header = ({
 
     return () => clearInterval(timer);
   }, []);
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
 
   const navigationTitles = {
     dashboard: 'Dashboard Overview',
@@ -32,20 +85,6 @@ const Header = ({
     reports: 'Reports & Analytics',
     settings: 'System Settings',
     profile: 'My Profile'
-  };
-
-  const notifications = [
-    { id: 1, type: 'warning', message: 'System backup required', time: '10 min ago' },
-    { id: 2, type: 'info', message: 'New user registered', time: '1 hour ago' },
-    { id: 3, type: 'success', message: 'Competition started', time: '2 hours ago' }
-  ];
-
-  const formatTime = (date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
   };
 
   const formatDate = (date) => {
@@ -93,11 +132,11 @@ const Header = ({
         <div className={styles.quickStats}>
           <div className={styles.statItem}>
             <span className={styles.statLabel}>Online</span>
-            <span className={`${styles.statValue} ${styles.online}`}>24</span>
+            <span className={`${styles.statValue} ${styles.online}`}>{stats.users.online}</span>
           </div>
           <div className={styles.statItem}>
             <span className={styles.statLabel}>Users</span>
-            <span className={styles.statValue}>1.2K</span>
+            <span className={styles.statValue}>{stats.users.total > 1000 ? `${(stats.users.total/1000).toFixed(1)}K` : stats.users.total}</span>
           </div>
         </div>
 
@@ -116,14 +155,16 @@ const Header = ({
               title="Notifications"
             >
               <span className={styles.btnIcon}>🔔</span>
-              <span className={styles.btnBadge}>3</span>
+              {notifications.length > 0 && (
+                <span className={styles.btnBadge}>{notifications.length}</span>
+              )}
             </button>
             
             {notificationsOpen && (
               <div className={styles.notificationDropdown}>
                 <div className={styles.dropdownHeader}>
                   <h3>Notifications</h3>
-                  <span className={styles.notificationCount}>3 new</span>
+                  <span className={styles.notificationCount}>{notifications.length} new</span>
                 </div>
                 
                 <div className={styles.notificationList}>
@@ -172,11 +213,11 @@ const Header = ({
               title="User menu"
             >
               <div className={styles.headerAvatar}>
-                <span>A</span>
+                <span>{adminData?.fullName?.charAt(0) || 'A'}</span>
               </div>
               <div className={styles.userInfo}>
-                <span className={styles.userName}>Admin User</span>
-                <span className={styles.userRole}>Super Admin</span>
+                <span className={styles.userName}>{adminData?.fullName || 'Admin User'}</span>
+                <span className={styles.userRole}>{adminData?.role === 'admin' ? 'Super Admin' : 'Admin'}</span>
               </div>
               <span className={`${styles.dropdownArrow} ${userMenuOpen ? styles.rotated : ''}`}>
                 ▼
@@ -186,10 +227,10 @@ const Header = ({
             {userMenuOpen && (
               <div className={styles.userDropdown}>
                 <div className={styles.userDropdownHeader}>
-                  <div className={styles.dropdownAvatar}>A</div>
+                  <div className={styles.dropdownAvatar}>{adminData?.fullName?.charAt(0) || 'A'}</div>
                   <div>
-                    <div className={styles.dropdownUserName}>Admin User</div>
-                    <div className={styles.dropdownUserEmail}>admin@papertrade.com</div>
+                    <div className={styles.dropdownUserName}>{adminData?.fullName || 'Admin User'}</div>
+                    <div className={styles.dropdownUserEmail}>{adminData?.contact?.email || 'admin@papertrade.com'}</div>
                   </div>
                 </div>
                 

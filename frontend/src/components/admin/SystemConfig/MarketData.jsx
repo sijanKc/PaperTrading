@@ -357,39 +357,30 @@ const MarketData = () => {
     if (!confirmUpdate) return;
     
     setIsLoading(true);
-    let updatedCount = 0;
-    
-    // Process purely in frontend loop for now as requested for "Manual Simulation"
-    // In a real production app, this should be a single backend endpoint
     try {
         const token = localStorage.getItem('token');
+        // If there's a sector filter, pass it to the backend to only update those stocks
+        const filter = sectorFilter !== 'all' ? { sector: sectorFilter } : {};
         
-        for (const stock of filteredStocks) {
-            const fluctuation = percentage;
-            // Add a tiny bit of randomness so not everything is exactly same % if user wants
-            // But for now, stick to exactly what user typed for control
-            
-            const newPrice = stock.currentPrice * (1 + (fluctuation / 100));
-            const roundedPrice = Math.round(newPrice * 100) / 100; // 2 decimal places
-            
-            if (roundedPrice < 0) continue; // Safety check
-
-            await fetch(`http://localhost:5000/api/stocks/${stock.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ currentPrice: roundedPrice })
-            });
-            updatedCount++;
+        const response = await fetch(`http://localhost:5000/api/stocks/bulk-update-price`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ percentage, filter })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert(data.message);
+            fetchStocksData();
+        } else {
+            alert('Bulk update failed: ' + data.message);
         }
-        
-        alert(`Successfully updated ${updatedCount} stocks!`);
-        fetchStocksData();
     } catch (error) {
         console.error("Bulk update error:", error);
-        alert("Error during bulk update. Check console.");
+        alert("Error during bulk update.");
     } finally {
         setIsLoading(false);
     }
@@ -432,11 +423,11 @@ const MarketData = () => {
 
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-NP', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'NPR',
       minimumFractionDigits: 0
-    }).format(amount);
+    }).format(amount).replace('NPR', 'Rs.');
   };
 
   // Format date
@@ -721,7 +712,7 @@ const MarketData = () => {
               
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
-                  Current Price (₹)
+                  Current Price (Rs.)
                   <input
                     type="number"
                     name="currentPrice"
@@ -750,7 +741,7 @@ const MarketData = () => {
               
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
-                  Market Cap (₹ Cr)
+                  Market Cap (Rs. Cr)
                   <input
                     type="number"
                     name="marketCap"
@@ -895,7 +886,7 @@ const MarketData = () => {
                   <div className={styles.companyCell}>
                     <div className={styles.companyName}>{stock.name}</div>
                     <div className={styles.marketCap}>
-                      Mkt Cap: ₹{stock.marketCap} Cr
+                      Mkt Cap: Rs.{stock.marketCap} Cr
                     </div>
                   </div>
                 </div>
@@ -912,7 +903,7 @@ const MarketData = () => {
                 <div className={styles.tableCell}>
                   <div className={styles.priceCell}>
                     <div className={styles.stockPrice}>
-                      ₹{stock.currentPrice.toFixed(2)}
+                      Rs.{stock.currentPrice.toFixed(2)}
                     </div>
                     {priceUpdateMode === 'individual' && (
                       <div className={styles.priceEdit}>
@@ -993,7 +984,7 @@ const MarketData = () => {
             <div className={styles.statIcon}>💰</div>
             <div className={styles.statContent}>
               <div className={styles.statValue}>
-                ₹{stocks.reduce((sum, stock) => sum + stock.currentPrice, 0).toFixed(0)}
+                Rs.{stocks.reduce((sum, stock) => sum + stock.currentPrice, 0).toFixed(0)}
               </div>
               <div className={styles.statLabel}>Total Value</div>
             </div>

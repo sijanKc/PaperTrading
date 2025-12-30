@@ -266,8 +266,9 @@
 }
 
 .typeDividend {
-  background: #fef3c7;
-  color: #b45309;
+  background: #fdf2f2;
+  color: #9b1c1c;
+  border: 1px solid #f8d7da;
 }
 
 .typeIcon {
@@ -282,31 +283,26 @@
 
 .stockSymbol {
   font-weight: 600;
-  color: #059669;
-  /* YEI CHANGE GARNUHOS */
+  color: #3b82f6;
   margin-bottom: 0.1rem;
 }
 
 .stockName {
-  color: #059669;
-  /* YEI CHANGE GARNUHOS */
+  color: #6b7280;
   font-size: 0.8rem;
-  opacity: 0.8;
 }
 
 /* Quantity, Price, Amount */
 .quantity,
-.price,
-.amount {
+.price {
   font-weight: 600;
-  color: #059669;
-  /* YEI CHANGE GARNUHOS */
+  color: #374151;
 }
 
 .amount {
+  font-weight: 700;
   font-size: 0.95rem;
-  color: #059669;
-  /* YEI CHANGE GARNUHOS */
+  color: #1f2937;
 }
 
 /* Date Time */
@@ -317,16 +313,13 @@
 
 .date {
   font-weight: 500;
-  color: #059669;
-  /* YEI CHANGE GARNUHOS */
+  color: #374151;
   margin-bottom: 0.1rem;
 }
 
 .time {
-  color: #059669;
-  /* YEI CHANGE GARNUHOS */
+  color: #6b7280;
   font-size: 0.8rem;
-  opacity: 0.8;
 }
 
 /* Status Badge */
@@ -372,11 +365,9 @@
 
 /* Fees */
 .fees {
-  color: #059669;
-  /* Green color for fees */
+  color: #6b7280;
   font-size: 0.9rem;
-  font-weight: 600;
-  /* Bold garnu paryo */
+  font-weight: 500;
 }
 
 /* Empty State */

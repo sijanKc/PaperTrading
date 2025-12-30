@@ -4,17 +4,52 @@ import styles from '../../admincss/PerformanceMetrics.module.css';
 const PerformanceMetrics = () => {
   // Initial metrics data
   const [metrics, setMetrics] = useState({
-    cpuUsage: 45,
-    memoryUsage: 68,
-    diskUsage: 52,
-    networkIn: 120,
-    networkOut: 85,
-    activeUsers: 235,
-    apiRequests: 1250,
-    databaseConnections: 85,
-    responseTime: 120,
-    uptime: '15d 4h 32m'
+    cpuUsage: 0,
+    memoryUsage: 0,
+    diskUsage: 0,
+    networkIn: 0,
+    networkOut: 0,
+    activeUsers: 0,
+    apiRequests: 0,
+    databaseConnections: 0,
+    responseTime: 0,
+    uptime: 'N/A'
   });
+
+  const [historicalData, setHistoricalData] = useState({
+    cpu: [],
+    memory: [],
+    network: [],
+    responseTime: []
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  // Fetch metrics from API
+  const fetchMetrics = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/monitoring/metrics', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMetrics(data.metrics);
+        setHistoricalData(data.historicalData);
+      }
+    } catch (err) {
+      console.error('Error fetching metrics:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMetrics();
+    // Initial fetch done
+  }, []);
 
   const [timeRange, setTimeRange] = useState('24h');
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -25,36 +60,12 @@ const PerformanceMetrics = () => {
     responseTime: 500
   });
 
-  const [historicalData, setHistoricalData] = useState({
-    cpu: [45, 52, 48, 60, 55, 65, 58, 62, 67, 70, 68, 72],
-    memory: [68, 70, 65, 72, 75, 78, 80, 82, 85, 83, 81, 79],
-    network: [120, 115, 130, 125, 140, 135, 150, 145, 155, 160, 165, 170],
-    responseTime: [120, 125, 130, 128, 135, 140, 145, 150, 155, 160, 165, 170]
-  });
 
-  // Simulate real-time updates
+  // Handle real-time updates from API
   useEffect(() => {
     if (!autoRefresh) return;
 
-    const interval = setInterval(() => {
-      setMetrics(prev => ({
-        ...prev,
-        cpuUsage: Math.min(100, Math.max(20, prev.cpuUsage + (Math.random() * 10 - 5))),
-        memoryUsage: Math.min(100, Math.max(30, prev.memoryUsage + (Math.random() * 8 - 4))),
-        activeUsers: Math.max(100, prev.activeUsers + Math.floor(Math.random() * 20 - 10)),
-        apiRequests: prev.apiRequests + Math.floor(Math.random() * 100),
-        responseTime: Math.max(80, prev.responseTime + (Math.random() * 20 - 10))
-      }));
-
-      // Update historical data
-      setHistoricalData(prev => ({
-        cpu: [...prev.cpu.slice(1), Math.min(100, Math.max(20, metrics.cpuUsage + (Math.random() * 10 - 5)))],
-        memory: [...prev.memory.slice(1), Math.min(100, Math.max(30, metrics.memoryUsage + (Math.random() * 8 - 4)))],
-        network: [...prev.network.slice(1), metrics.networkIn + Math.floor(Math.random() * 30)],
-        responseTime: [...prev.responseTime.slice(1), Math.max(80, metrics.responseTime + (Math.random() * 20 - 10))]
-      }));
-    }, 3000);
-
+    const interval = setInterval(fetchMetrics, 5000);
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
@@ -130,7 +141,8 @@ const PerformanceMetrics = () => {
 
   // Render mini chart
   const renderMiniChart = (data) => {
-    const max = Math.max(...data);
+    if (!data || data.length === 0) return <div className={styles.noDataMini}>No data</div>;
+    const max = Math.max(...data, 1);
     return (
       <div className={styles.miniChart}>
         {data.map((value, index) => (

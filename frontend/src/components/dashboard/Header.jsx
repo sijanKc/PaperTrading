@@ -137,11 +137,16 @@ const Header = () => {
     fetchUserData();
     fetchNotifications();
 
-    // Set up real-time updates
-    const portfolioInterval = setInterval(fetchUserData, 30000); // Update every 30 seconds
+    // Set up real-time updates - only if autoRefresh is not explicitly disabled
+    const isAutoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false';
+    
+    let portfolioInterval;
+    if (isAutoRefreshEnabled) {
+      portfolioInterval = setInterval(fetchUserData, 30000); // Update every 30 seconds
+    }
 
     return () => {
-      clearInterval(portfolioInterval);
+      if (portfolioInterval) clearInterval(portfolioInterval);
     };
   }, []);
 
@@ -163,16 +168,45 @@ const Header = () => {
     navigate('/login');
   };
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
+  // 🆕 SYNC SETTINGS FROM BACKEND
+  const syncSettings = async () => {
+    try {
+      const response = await api.get('/settings');
+      if (response.data.success) {
+        const settings = response.data.data;
+        
+        // Apply theme from settings
+        if (settings.theme) {
+          applyTheme(settings.theme);
+        }
+        
+        // Handle auto-refresh preference
+        if (settings.autoRefresh === false) {
+          // If auto-refresh is disabled, we might want to clear existing intervals
+          // but for now we'll just store it in state if needed
+          localStorage.setItem('autoRefresh', 'false');
+        } else {
+          localStorage.setItem('autoRefresh', 'true');
+        }
+      }
+    } catch (err) {
+      console.error('Error syncing settings:', err);
+    }
+  };
+
+  const applyTheme = (newTheme) => {
+    let actualTheme = newTheme;
+    if (newTheme === 'auto') {
+      actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
     
-    // Apply theme to entire document
-    document.body.setAttribute('data-bs-theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
+    setTheme(actualTheme);
+    document.body.setAttribute('data-bs-theme', actualTheme);
+    document.documentElement.setAttribute('data-theme', actualTheme);
+    document.documentElement.setAttribute('data-bs-theme', actualTheme);
     
     // Update CSS variables for theme
-    if (newTheme === 'light') {
+    if (actualTheme === 'light') {
       document.documentElement.style.setProperty('--header-bg', 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)');
       document.documentElement.style.setProperty('--header-border', '#d1d5db');
       document.documentElement.style.setProperty('--text-color', 'white');
@@ -185,26 +219,26 @@ const Header = () => {
     localStorage.setItem('theme', newTheme);
   };
 
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme);
+    
+    // Optionally update settings in backend
+    api.put('/settings', { theme: newTheme }).catch(err => console.error('Error updating theme setting:', err));
+  };
+
   // Initialize theme and user data
   useEffect(() => {
+    // Initial sync
+    syncSettings();
+    
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(savedTheme);
-    document.body.setAttribute('data-bs-theme', savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    applyTheme(savedTheme);
 
     // Initialize user data from localStorage
     const userFromStorage = localStorage.getItem('user');
     if (userFromStorage) {
       setUserData(JSON.parse(userFromStorage));
-    }
-
-    // Apply initial theme colors
-    if (savedTheme === 'light') {
-      document.documentElement.style.setProperty('--header-bg', 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)');
-      document.documentElement.style.setProperty('--header-border', '#d1d5db');
-    } else {
-      document.documentElement.style.setProperty('--header-bg', 'linear-gradient(135deg, #1e293b 0%, #334155 100%)');
-      document.documentElement.style.setProperty('--header-border', '#475569');
     }
   }, []);
 

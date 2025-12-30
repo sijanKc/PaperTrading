@@ -770,9 +770,18 @@
 [data-bs-theme="dark"] .faqItem,
 [data-bs-theme="dark"] .hourSlot,
 [data-bs-theme="dark"] .pathStep {
-  background: #1f2937;
-  border-color: #374151;
-  color: #f9fafb;
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+[data-bs-theme="dark"] .tabsNav {
+  background: #111827 !important;
+  border-bottom-color: #374151 !important;
+}
+
+[data-bs-theme="dark"] .tabButton {
+  color: #9ca3af !important;
 }
 
 [data-bs-theme="dark"] .header h1 {
@@ -786,8 +795,12 @@
 }
 
 [data-bs-theme="dark"] .faqQuestion {
-  background: #374151;
-  color: #f9fafb;
+  background: #374151 !important;
+  color: #f9fafb !important;
+}
+
+[data-bs-theme="dark"] .questionText {
+  color: #f9fafb !important;
 }
 
 [data-bs-theme="dark"] .faqOpen {
@@ -795,7 +808,19 @@
 }
 
 [data-bs-theme="dark"] .faqAnswer {
-  background: #374151;
+  background: #1f2937 !important;
+}
+
+[data-bs-theme="dark"] .faqAnswer p {
+  color: #d1d5db !important;
+}
+
+[data-bs-theme="dark"] .sectionSubtitle {
+  color: #9ca3af !important;
+}
+
+[data-bs-theme="dark"] .categoryName {
+  color: #60a5fa !important;
 }
 
 /* Supplemental Dark Mode Fixes */

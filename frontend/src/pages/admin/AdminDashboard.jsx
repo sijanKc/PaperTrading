@@ -15,6 +15,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [monitoringView, setMonitoringView] = useState('logs'); // For monitoring sub-tabs
   const [reportsView, setReportsView] = useState('list'); // For reports sub-tabs
+  const [alerts, setAlerts] = useState([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
 
   // Fetch dashboard stats
   const [stats, setStats] = useState({
@@ -33,7 +35,17 @@ const AdminDashboard = () => {
         });
         const data = await response.json();
         if (data.success) {
-          setStats(data.stats);
+          setStats({
+            users: {
+              total: data.stats.users.total,
+              active: data.stats.users.active,
+              premium: data.stats.users.premium,
+              pending: data.stats.users.pending,
+              online: data.stats.users.online
+            },
+            trading: data.stats.trading,
+            system: data.stats.system
+          });
         }
       } catch (error) {
         console.error('Error fetching admin stats:', error);
@@ -47,11 +59,35 @@ const AdminDashboard = () => {
     }
   }, [activeTab]);
 
+  const fetchAlerts = async () => {
+    try {
+      setLoadingAlerts(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/monitoring/alerts', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAlerts(data.alerts);
+      }
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+    } finally {
+      setLoadingAlerts(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeTab === 'monitoring' && monitoringView === 'alerts') {
+      fetchAlerts();
+    }
+  }, [activeTab, monitoringView]);
+
   // Render content based on active tab
   const renderContent = () => {
     switch(activeTab) {
       case 'dashboard':
-        return <Dashboard stats={stats} loading={loadingStats} />;
+        return <Dashboard stats={stats} loading={loadingStats} setActiveTab={setActiveTab} />;
       
       case 'users':
         return <UserList />;
@@ -199,41 +235,29 @@ const AdminDashboard = () => {
                 <div className="alerts-dashboard">
                   <h2>🚨 System Alerts</h2>
                   <div className="alerts-container">
-                    <div className="alert-card critical">
-                      <div className="alert-icon">🔥</div>
-                      <div className="alert-content">
-                        <h4>CPU Usage Critical</h4>
-                        <p>CPU usage at 95% for 5 minutes</p>
-                        <span className="alert-time">10 minutes ago</span>
+                    {loadingAlerts ? (
+                      <p>Loading alerts...</p>
+                    ) : alerts.length > 0 ? (
+                      alerts.map((alert, index) => (
+                        <div key={index} className={`alert-card ${alert.type}`}>
+                          <div className="alert-icon">
+                            {alert.type === 'critical' ? '🔥' : alert.type === 'warning' ? '⚠️' : 'ℹ️'}
+                          </div>
+                          <div className="alert-content">
+                            <h4>{alert.message}</h4>
+                            <p>Current value: {alert.value}</p>
+                            <span className="alert-time">Real-time</span>
+                          </div>
+                          <button className="alert-action">
+                            {alert.type === 'critical' ? 'Resolve' : 'Acknowledge'}
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-alerts">
+                        <p>✅ All systems clear. No active alerts.</p>
                       </div>
-                      <button className="alert-action">
-                        Resolve
-                      </button>
-                    </div>
-                    
-                    <div className="alert-card warning">
-                      <div className="alert-icon">⚠️</div>
-                      <div className="alert-content">
-                        <h4>Memory Usage High</h4>
-                        <p>Memory usage at 85% threshold</p>
-                        <span className="alert-time">30 minutes ago</span>
-                      </div>
-                      <button className="alert-action">
-                        Acknowledge
-                      </button>
-                    </div>
-                    
-                    <div className="alert-card info">
-                      <div className="alert-icon">ℹ️</div>
-                      <div className="alert-content">
-                        <h4>Database Backup Required</h4>
-                        <p>Weekly backup overdue by 2 days</p>
-                        <span className="alert-time">2 hours ago</span>
-                      </div>
-                      <button className="alert-action">
-                        Schedule
-                      </button>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -1,4 +1,5 @@
 const Stock = require('../models/Stock');
+const TechnicalAnalysis = require('../utils/technicalAnalysis');
 
 // Get all stocks
 const getAllStocks = async (req, res) => {
@@ -170,6 +171,7 @@ const createStock = async (req, res) => {
       dayLow: currentPrice,        // Default
       volume: volume || 0,
       marketCap: marketCap || 0,
+      lotSize: lotSize || 10,
       isActive: enabled !== undefined ? enabled : true
       // defaults for other fields will be handled by schema
     });
@@ -226,6 +228,67 @@ const deleteStock = async (req, res) => {
   }
 };
 
+// ADMIN: Bulk update prices
+const bulkUpdatePrice = async (req, res) => {
+  try {
+    const { percentage, filter = {} } = req.body;
+
+    if (percentage === undefined || isNaN(percentage)) {
+      return res.status(400).json({ success: false, message: 'Invalid percentage' });
+    }
+
+    const stocks = await Stock.find(filter);
+    const updates = stocks.map(async (stock) => {
+      const newPrice = stock.currentPrice * (1 + (percentage / 100));
+      stock.currentPrice = Math.round(newPrice * 100) / 100;
+      return stock.save();
+    });
+
+    await Promise.all(updates);
+
+    res.json({
+      success: true,
+      message: `Successfully updated ${stocks.length} stocks by ${percentage}%`
+    });
+  } catch (error) {
+    console.error('Bulk update error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Get stock technical analysis (SMA, RSI)
+const getStockAnalytics = async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    const stock = await Stock.findOne({ symbol: symbol.toUpperCase() });
+
+    if (!stock) {
+      return res.status(404).json({ success: false, message: 'Stock not found' });
+    }
+
+    // Extract prices from priceHistory
+    const prices = stock.priceHistory.map(p => p.price);
+
+    // Calculate metrics using DSA algorithms
+    const sma20 = TechnicalAnalysis.calculateSMA(prices, 20);
+    const rsi = TechnicalAnalysis.calculateRSI(prices, 14);
+
+    res.json({
+      success: true,
+      symbol: stock.symbol,
+      analytics: {
+        currentPrice: stock.currentPrice,
+        sma20: sma20[sma20.length - 1] || null, // Latest SMA
+        rsi: rsi,
+        recommendation: rsi > 70 ? 'SELL (Overbought)' : rsi < 30 ? 'BUY (Oversold)' : 'HOLD (Neutral)'
+      }
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 module.exports = {
   getAllStocks,
   getStockBySymbol,
@@ -235,5 +298,7 @@ module.exports = {
   getAdminStocks,
   createStock,
   updateStock,
-  deleteStock
+  deleteStock,
+  bulkUpdatePrice,
+  getStockAnalytics
 };

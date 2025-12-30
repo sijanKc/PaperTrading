@@ -170,11 +170,11 @@ const TradingRules = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-NP', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'NPR',
       minimumFractionDigits: 0
-    }).format(amount);
+    }).format(amount).replace('NPR', 'Rs.');
   };
 
   if (isLoading) {
@@ -244,7 +244,7 @@ const TradingRules = () => {
                 <span className={styles.helperText}>Maximum total trading amount per day</span>
               </label>
               <div className={styles.inputGroup}>
-                <span className={styles.currencySymbol}>₹</span>
+                <span className={styles.currencySymbol}>Rs.</span>
                 <input
                   type="number"
                   value={rules.dailyTradeLimit}
@@ -282,7 +282,7 @@ const TradingRules = () => {
                 <span className={styles.helperText}>Maximum amount for a single trade</span>
               </label>
               <div className={styles.inputGroup}>
-                <span className={styles.currencySymbol}>₹</span>
+                <span className={styles.currencySymbol}>Rs.</span>
                 <input
                   type="number"
                   value={rules.perTradeLimit}
@@ -300,7 +300,7 @@ const TradingRules = () => {
                 <span className={styles.helperText}>Smallest allowed trade value</span>
               </label>
               <div className={styles.inputGroup}>
-                <span className={styles.currencySymbol}>₹</span>
+                <span className={styles.currencySymbol}>Rs.</span>
                 <input
                   type="number"
                   value={rules.minTradeAmount}
@@ -597,14 +597,14 @@ const TradingRules = () => {
                 <span className={styles.feeSuffix}>%</span>
               </div>
               <div className={styles.feeExample}>
-                Example: ₹10,000 trade = ₹{(10000 * rules.commissionRate).toFixed(2)}
+                Example: Rs.10,000 trade = Rs.{(10000 * rules.commissionRate).toFixed(2)}
               </div>
             </div>
             
             <div className={styles.feeItem}>
               <div className={styles.feeLabel}>DP Charge (per script)</div>
               <div className={styles.feeInputGroup}>
-                <span className={styles.feePrefix}>₹</span>
+                <span className={styles.feePrefix}>Rs.</span>
                 <input
                   type="number"
                   value={rules.dpCharge}

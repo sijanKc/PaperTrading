@@ -16,6 +16,7 @@ const UserCard = ({
   
   // Format currency
   const formatCurrency = (amount) => {
+    if (amount === undefined || amount === null || isNaN(amount)) return 'Rs. 0';
     return new Intl.NumberFormat('en-NP', {
       style: 'currency',
       currency: 'NPR',
@@ -298,7 +299,7 @@ const UserCard = ({
                 #{user.rank}
               </div>
               <div className={styles.statSubtext}>
-                Top {Math.ceil((user.rank / user.totalUsers) * 100)}%
+                Top {user.totalUsers > 0 ? Math.ceil((user.rank / user.totalUsers) * 100) : 0}%
               </div>
             </div>
           </div>

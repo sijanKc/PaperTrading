@@ -14,6 +14,7 @@ const Sidebar = () => {
     { path: '/transactions', icon: '📝', label: 'Transactions', badge: null },
     { path: '/analytics', icon: '📈', label: 'Analytics', badge: 'PRO' },
     { path: '/leaderboard', icon: '🏆', label: 'Leaderboard', badge: null },
+    { path: '/competitions', icon: '🏁', label: 'Competitions', badge: 'FUN' },
     { path: '/journal', icon: '📔', label: 'Trading Journal', badge: null },
     { path: '/strategytester', icon: '🧪', label: 'Strategy Tester', badge: 'BETA' },
     { path: '/settings', icon: '⚙️', label: 'Settings', badge: null },

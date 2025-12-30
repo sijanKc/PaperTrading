@@ -89,89 +89,81 @@ const generateChartDataFromStock = async (timeframe, stock) => {
   const data = [];
   const now = new Date();
 
-  let points = 78;
-  let timeMultiplier = 1;
+  // Use real history if available
+  if (stock.priceHistory && stock.priceHistory.length > 0) {
+    let historyToShow = [];
+    const points = getPointsForTimeframe(timeframe);
+    const startTime = getStartTimeForTimeframe(timeframe);
 
-  switch (timeframe) {
-    case '1D':
-      points = 78; // 6.5 hours * 12 points per hour
-      timeMultiplier = 1;
-      break;
-    case '1W':
-      points = 35; // 7 days * 5 points per day
-      timeMultiplier = 7;
-      break;
-    case '1M':
-      points = 30; // 30 days
-      timeMultiplier = 30;
-      break;
-    case '3M':
-      points = 90; // 90 days
-      timeMultiplier = 90;
-      break;
-    case '1Y':
-      points = 52; // 52 weeks
-      timeMultiplier = 365;
-      break;
+    // Filter history by timeframe
+    const filteredHistory = stock.priceHistory.filter(h => h.timestamp >= startTime);
+
+    if (filteredHistory.length > 5) {
+      // If we have enough real history, use it
+      return filteredHistory.map((h, i) => {
+        const prev = i > 0 ? filteredHistory[i - 1] : h;
+        return {
+          time: h.timestamp.getTime(),
+          open: parseFloat(prev.price.toFixed(2)),
+          high: parseFloat(Math.max(h.price, prev.price).toFixed(2)),
+          low: parseFloat(Math.min(h.price, prev.price).toFixed(2)),
+          close: parseFloat(h.price.toFixed(2)),
+          volume: h.volume || Math.floor(Math.random() * 100000)
+        };
+      });
+    }
   }
 
+  // Fallback to simulation if history is empty or too short
+  return simulateChartData(timeframe, stock);
+};
+
+// Helper to get needed data points
+const getPointsForTimeframe = (timeframe) => {
+  const map = { '1D': 78, '1W': 35, '1M': 30, '3M': 90, '1Y': 52 };
+  return map[timeframe] || 78;
+};
+
+// Helper to get start time
+const getStartTimeForTimeframe = (timeframe) => {
+  const now = new Date();
+  switch (timeframe) {
+    case '1D': return new Date(now.setHours(now.getHours() - 24));
+    case '1W': return new Date(now.setDate(now.getDate() - 7));
+    case '1M': return new Date(now.setMonth(now.setMonth() - 1));
+    case '3M': return new Date(now.setMonth(now.setMonth() - 3));
+    case '1Y': return new Date(now.setFullYear(now.getFullYear() - 1));
+    default: return new Date(now.setHours(now.getHours() - 24));
+  }
+};
+
+// Original simulation logic moved to helper
+const simulateChartData = (timeframe, stock) => {
+  const data = [];
+  const now = new Date();
+  const points = getPointsForTimeframe(timeframe);
   const basePrice = stock.currentPrice;
   const volatility = stock.volatility || 0.02;
 
   let currentPrice = basePrice;
-
-  // Market trend based on stock performance
-  let marketTrend = 0;
-  if (stock.previousClose) {
-    const priceChange = ((stock.currentPrice - stock.previousClose) / stock.previousClose) * 100;
-    marketTrend = priceChange / 100; // Convert to decimal
-  }
-
   for (let i = points - 1; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * (timeMultiplier * 60 * 60 * 1000) / points);
-
-    // Realistic price movement with trend
+    const time = new Date(now.getTime() - (i * 15 * 60 * 1000)); // 15 min steps
     const open = currentPrice;
-    const randomChange = (Math.random() - 0.5) * 2 * volatility * currentPrice;
-    const trendChange = marketTrend * currentPrice * (i / points);
-    const totalChange = randomChange + trendChange;
-
-    const high = open + Math.abs(totalChange) * (0.5 + Math.random() * 0.5);
-    const low = open - Math.abs(totalChange) * (0.5 + Math.random() * 0.5);
-    const close = open + totalChange;
-
-    // Ensure realistic values
-    const actualHigh = Math.max(open, close, high);
-    const actualLow = Math.min(open, close, low);
-
+    const change = (Math.random() - 0.5) * 2 * volatility * currentPrice;
+    const close = open + change;
+    const high = Math.max(open, close) + Math.random() * 0.005 * currentPrice;
+    const low = Math.min(open, close) - Math.random() * 0.005 * currentPrice;
     currentPrice = close;
-
-    // Realistic volume based on timeframe and price movement
-    let volume = 0;
-    const priceMovement = Math.abs(totalChange) / open;
-
-    if (timeframe === '1D') {
-      // Market hours (11 AM - 3 PM) ma high volume
-      const hour = time.getHours();
-      if (hour >= 11 && hour <= 15) {
-        volume = Math.floor(Math.random() * 800000) + 200000 + (priceMovement * 1000000);
-      } else {
-        volume = Math.floor(Math.random() * 200000) + 50000 + (priceMovement * 200000);
-      }
-    } else {
-      volume = Math.floor(Math.random() * 1000000) + 100000 + (priceMovement * 500000);
-    }
 
     data.push({
       time: time.getTime(),
       open: parseFloat(open.toFixed(2)),
-      high: parseFloat(actualHigh.toFixed(2)),
-      low: parseFloat(actualLow.toFixed(2)),
+      high: parseFloat(high.toFixed(2)),
+      low: parseFloat(low.toFixed(2)),
       close: parseFloat(close.toFixed(2)),
-      volume: Math.floor(volume)
+      volume: Math.floor(Math.random() * 500000) + 100000
     });
   }
-
   return data;
 };
 

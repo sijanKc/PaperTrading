@@ -11,6 +11,8 @@ router.get('/stats', adminController.getDashboardStats);
 
 // User Management
 router.get('/users', adminController.getUsers);
+router.post('/users', adminController.createUser);
+router.put('/users/:id', adminController.updateUser);
 router.post('/users/:id/approve', adminController.approveUser); // New approval route
 router.put('/users/:id/status', adminController.updateUserStatus);
 router.delete('/users/:id', adminController.deleteUser);

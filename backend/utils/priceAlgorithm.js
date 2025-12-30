@@ -54,7 +54,7 @@ class ProfessionalPriceSimulator {
   }
 
   // Apply sector-specific adjustments
-  applySectorEffects(price, sector, marketMomentum) {
+  applySectorEffects(price, sector, marketMomentum, timeDelta = 1 / 252) {
     const sectorMultipliers = {
       'Commercial Banks': 1.1,      // More correlated with market
       'Insurance': 1.05,
@@ -64,9 +64,14 @@ class ProfessionalPriceSimulator {
     };
 
     const multiplier = sectorMultipliers[sector] || 1.0;
-    const sectorAdjustedChange = (price * marketMomentum * multiplier) - price;
 
-    return price + (sectorAdjustedChange * 0.3); // 30% sector influence
+    // CORRECTED: Calculate the trend-based drift for this interval
+    // Instead of absolute subtraction, we treat it as an additional drift component
+    const sectorDrift = marketMomentum * multiplier;
+    const sectorAdjustedPrice = price * Math.exp(sectorDrift * timeDelta);
+
+    // Mix the GBM price with sector-influenced price (30% weight to sector)
+    return price * 0.7 + sectorAdjustedPrice * 0.3;
   }
 
   // Apply volume-based volatility
@@ -109,8 +114,8 @@ class ProfessionalPriceSimulator {
             timeDelta
           );
 
-          // Apply sector effects
-          newPrice = this.applySectorEffects(newPrice, stock.sector, marketMomentum);
+          // Apply sector effects - passing timeDelta for proportional impact
+          newPrice = this.applySectorEffects(newPrice, stock.sector, marketMomentum, timeDelta);
 
           // Ensure reasonable bounds (30% to 300% of base price)
           newPrice = Math.max(stock.basePrice * 0.3, newPrice);
@@ -122,10 +127,16 @@ class ProfessionalPriceSimulator {
           // Generate random volume increase (100-5000 shares)
           const volumeIncrease = Math.floor(100 + Math.random() * 4900);
 
+          // Calculate change and changePercent explicitly
+          const changeValue = newPrice - stock.currentPrice;
+          const changePercentValue = (changeValue / stock.currentPrice) * 100;
+
           // Update stock
           await Stock.findByIdAndUpdate(stock._id, {
             previousClose: stock.currentPrice,
             currentPrice: newPrice,
+            change: changeValue,
+            changePercent: changePercentValue,
             dayHigh: Math.max(stock.dayHigh || newPrice, newPrice),
             dayLow: Math.min(stock.dayLow || newPrice, newPrice),
             volume: stock.volume + volumeIncrease,

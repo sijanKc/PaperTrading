@@ -31,6 +31,21 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Auto-fill and Auto-redirect logic
+  React.useEffect(() => {
+    // 1. Auto-Redirect if already logged in
+    const token = localStorage.getItem("token");
+    if (token) {
+      window.location.href = "/dashboard";
+    }
+
+    // 2. Auto-Fill Username if remembered
+    const savedUsername = localStorage.getItem("rememberedUsername");
+    if (savedUsername) {
+      setFormData(prev => ({ ...prev, username: savedUsername, rememberMe: true }));
+    }
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -59,7 +74,8 @@ const Login = () => {
         },
         body: JSON.stringify({
           username: formData.username,
-          password: formData.password
+          password: formData.password,
+          rememberMe: formData.rememberMe
         }),
       });
 
@@ -71,6 +87,13 @@ const Login = () => {
         // Save token to localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
+
+        // Remember Me Logic: Save/Remove Username
+        if (formData.rememberMe) {
+          localStorage.setItem("rememberedUsername", formData.username);
+        } else {
+          localStorage.removeItem("rememberedUsername");
+        }
         
         // Redirect to dashboard
         window.location.href = "/dashboard";

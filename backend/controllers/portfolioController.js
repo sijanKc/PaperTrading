@@ -31,10 +31,10 @@ const getPortfolioOverview = async (req, res) => {
     // Calculate portfolio totals using REAL stock data
     const portfolioTotals = portfolio.reduce((totals, item) => {
       if (!item.stockId) return totals;
-      
+
       const currentValue = item.quantity * item.stockId.currentPrice;
       const profitLoss = currentValue - item.totalInvestment;
-      
+
       return {
         currentPortfolioValue: totals.currentPortfolioValue + currentValue,
         totalInvestment: totals.totalInvestment + item.totalInvestment,
@@ -46,27 +46,29 @@ const getPortfolioOverview = async (req, res) => {
 
     // Calculate daily P/L using real transaction data
     const dailyPL = await calculateDailyPL(userId, portfolio);
-    
+
     // Calculate percentages based on REAL data
-    const totalPLPercent = totalInvestment > 0 ? 
+    const totalPLPercent = totalInvestment > 0 ?
       (totalPL / totalInvestment) * 100 : 0;
-    
-    const dailyPLPercent = currentPortfolioValue > 0 ? 
+
+    const dailyPLPercent = currentPortfolioValue > 0 ?
       (dailyPL / currentPortfolioValue) * 100 : 0;
-    
-    // Calculate available cash from REAL user balance
-    const availableCash = Math.max(0, user.virtualBalance - currentPortfolioValue);
+
+    // Calculate available cash and total net worth
+    // user.virtualBalance in DB is actual liquid cash
+    const availableCash = user.virtualBalance;
+    const totalNetWorth = availableCash + currentPortfolioValue;
 
     // Response data for OverviewCards
     const responseData = {
-      virtualBalance: parseFloat(user.virtualBalance.toFixed(2)),
+      virtualBalance: parseFloat(totalNetWorth.toFixed(2)), // Net Worth (Cash + Stocks)
       totalInvestment: parseFloat(totalInvestment.toFixed(2)),
       currentValue: parseFloat(currentPortfolioValue.toFixed(2)),
       profitLoss: parseFloat(totalPL.toFixed(2)),
       profitLossPercent: parseFloat(totalPLPercent.toFixed(2)),
       dailyPL: parseFloat(dailyPL.toFixed(2)),
       dailyPLPercent: parseFloat(dailyPLPercent.toFixed(2)),
-      availableCash: parseFloat(availableCash.toFixed(2)),
+      availableCash: parseFloat(availableCash.toFixed(2)), // Liquid Cash
       holdingsCount: portfolio.length,
       lastUpdated: new Date().toISOString()
     };
@@ -80,8 +82,8 @@ const getPortfolioOverview = async (req, res) => {
 
   } catch (error) {
     console.error('Portfolio overview error:', error);
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       success: false,
       message: 'Unable to fetch portfolio data at this time',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -110,10 +112,10 @@ const getPortfolioHoldings = async (req, res) => {
     // Calculate portfolio summary with REAL data
     const portfolioSummary = portfolio.reduce((summary, item) => {
       if (!item.stockId) return summary;
-      
+
       const currentValue = item.quantity * item.stockId.currentPrice;
       const profitLoss = currentValue - item.totalInvestment;
-      const profitLossPercent = item.totalInvestment > 0 ? 
+      const profitLossPercent = item.totalInvestment > 0 ?
         (profitLoss / item.totalInvestment) * 100 : 0;
 
       return {
@@ -146,12 +148,12 @@ const getPortfolioHoldings = async (req, res) => {
     // Calculate weights for each holding based on REAL values
     portfolioSummary.holdings = portfolioSummary.holdings.map(holding => ({
       ...holding,
-      weight: portfolioSummary.totalPortfolioValue > 0 ? 
+      weight: portfolioSummary.totalPortfolioValue > 0 ?
         (holding.marketValue / portfolioSummary.totalPortfolioValue) * 100 : 0
     }));
 
     // Calculate additional metrics based on REAL data
-    const totalProfitLossPercent = portfolioSummary.totalInvestment > 0 ? 
+    const totalProfitLossPercent = portfolioSummary.totalInvestment > 0 ?
       (portfolioSummary.totalProfitLoss / portfolioSummary.totalInvestment) * 100 : 0;
 
     const sectorAllocation = calculateSectorAllocation(portfolioSummary.holdings);
@@ -163,7 +165,7 @@ const getPortfolioHoldings = async (req, res) => {
 
     // Calculate advanced metrics using REAL data
     const advancedMetrics = await calculateAdvancedMetrics(
-      portfolioSummary.holdings, 
+      portfolioSummary.holdings,
       portfolioSummary.totalPortfolioValue,
       userId
     );
@@ -176,12 +178,13 @@ const getPortfolioHoldings = async (req, res) => {
       totalProfitLoss: parseFloat(portfolioSummary.totalProfitLoss.toFixed(2)),
       totalProfitLossPercent: parseFloat(totalProfitLossPercent.toFixed(2)),
       dailyProfitLoss: parseFloat(dailyProfitLoss.toFixed(2)),
-      availableCash: Math.max(0, user.virtualBalance - portfolioSummary.totalPortfolioValue),
-      
+      availableCash: user.virtualBalance, // Corrected: user.virtualBalance IS the available cash
+      virtualBalance: user.virtualBalance + portfolioSummary.totalPortfolioValue, // Added total net worth
+
       // Holdings and allocation
       holdings: portfolioSummary.holdings,
       sectorAllocation: sectorAllocation,
-      
+
       // Advanced metrics for PortfolioPreview
       portfolioBeta: parseFloat(portfolioBeta.toFixed(2)),
       sharpeRatio: advancedMetrics.sharpeRatio,
@@ -189,7 +192,7 @@ const getPortfolioHoldings = async (req, res) => {
       weeklyPerformance: advancedMetrics.weeklyPerformance,
       monthlyPerformance: advancedMetrics.monthlyPerformance,
       performanceHistory: advancedMetrics.performanceHistory,
-      
+
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -206,7 +209,7 @@ const getPortfolioHoldings = async (req, res) => {
 
   } catch (error) {
     console.error('Portfolio holdings error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to fetch portfolio holdings',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -246,7 +249,7 @@ const getPortfolioSummary = async (req, res) => {
       if (item.stockId) {
         const itemValue = item.quantity * item.stockId.currentPrice;
         currentValue += itemValue;
-        
+
         // Calculate daily P/L from price changes
         if (item.stockId.change) {
           dailyPL += item.stockId.change * item.quantity;
@@ -257,18 +260,21 @@ const getPortfolioSummary = async (req, res) => {
     const profitLoss = currentValue - totalInvestment;
     const profitLossPercent = totalInvestment > 0 ? (profitLoss / totalInvestment) * 100 : 0;
     const dailyPLPercent = currentValue > 0 ? (dailyPL / currentValue) * 100 : 0;
-    const availableCash = Math.max(0, user.virtualBalance - currentValue);
+
+    // user.virtualBalance in DB is actual liquid cash
+    const availableCash = user.virtualBalance;
+    const totalNetWorth = availableCash + currentValue;
 
     // Response data for OverviewCards
     const responseData = {
-      virtualBalance: parseFloat(user.virtualBalance.toFixed(2)),
+      virtualBalance: parseFloat(totalNetWorth.toFixed(2)), // Net Worth (Cash + Stocks)
       totalInvestment: parseFloat(totalInvestment.toFixed(2)),
       currentValue: parseFloat(currentValue.toFixed(2)),
       profitLoss: parseFloat(profitLoss.toFixed(2)),
       profitLossPercent: parseFloat(profitLossPercent.toFixed(2)),
       dailyPL: parseFloat(dailyPL.toFixed(2)),
       dailyPLPercent: parseFloat(dailyPLPercent.toFixed(2)),
-      availableCash: parseFloat(availableCash.toFixed(2)),
+      availableCash: parseFloat(availableCash.toFixed(2)), // Liquid Cash
       holdingsCount: portfolio.length
     };
 
@@ -294,21 +300,21 @@ const calculateDailyPL = async (userId, portfolio) => {
     // Get start of today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // Get REAL transactions from today
     const todaysTransactions = await Transaction.find({
       userId,
       createdAt: { $gte: today },
       status: 'COMPLETED'
     })
-    .populate('stockId', 'symbol currentPrice')
-    .lean();
+      .populate('stockId', 'symbol currentPrice')
+      .lean();
 
     // Calculate P/L from today's REAL transactions
     const transactionPL = todaysTransactions.reduce((total, tx) => {
       if (tx.type === 'SELL' && tx.stockId) {
         // Find corresponding portfolio holding
-        const portfolioHolding = portfolio.find(p => 
+        const portfolioHolding = portfolio.find(p =>
           p.stockId && p.stockId._id.toString() === tx.stockId._id.toString()
         );
         if (portfolioHolding) {
@@ -337,7 +343,7 @@ const calculateDailyPL = async (userId, portfolio) => {
 const calculateUnrealizedDailyPL = (portfolio) => {
   try {
     let totalUnrealizedPL = 0;
-    
+
     for (const item of portfolio) {
       const stock = item.stockId;
       if (stock && stock.previousClose) {
@@ -346,7 +352,7 @@ const calculateUnrealizedDailyPL = (portfolio) => {
         totalUnrealizedPL += positionPL;
       }
     }
-    
+
     return totalUnrealizedPL;
   } catch (error) {
     console.error('Unrealized PL calculation error:', error);
@@ -391,7 +397,7 @@ const calculateSectorAllocation = (holdings) => {
 
   return Object.keys(sectorMap).map(sector => ({
     sector,
-    percentage: totalValue > 0 ? 
+    percentage: totalValue > 0 ?
       parseFloat(((sectorMap[sector].value / totalValue) * 100).toFixed(2)) : 0,
     value: parseFloat(sectorMap[sector].value.toFixed(2)),
     count: sectorMap[sector].count,
@@ -404,7 +410,7 @@ const calculateSectorAllocation = (holdings) => {
  */
 const calculatePortfolioBeta = async (holdings) => {
   if (holdings.length === 0) return 1.0;
-  
+
   let totalBeta = 0;
   let totalWeight = 0;
 
@@ -412,7 +418,7 @@ const calculatePortfolioBeta = async (holdings) => {
     // Use REAL beta from stock data, default to 1.0 if not available
     const stockBeta = holding.beta || 1.0;
     const weight = holding.weight;
-    
+
     totalBeta += stockBeta * weight;
     totalWeight += weight;
   }
@@ -437,14 +443,14 @@ const calculateAdvancedMetrics = async (holdings, totalPortfolioValue, userId) =
 
     // Calculate REAL Sharpe Ratio based on portfolio performance
     const sharpeRatio = await calculateRealSharpeRatio(userId);
-    
+
     // Calculate REAL max drawdown from transaction history
     const maxDrawdown = await calculateRealMaxDrawdown(userId);
-    
+
     // Calculate REAL weekly and monthly performance
     const weeklyPerformance = await calculateRealPerformance(userId, 7);
     const monthlyPerformance = await calculateRealPerformance(userId, 30);
-    
+
     // Generate REAL performance history
     const performanceHistory = await calculateRealPerformanceHistory(userId);
 
@@ -477,13 +483,13 @@ const calculateRealSharpeRatio = async (userId) => {
     // Simplified Sharpe calculation
     const returns = [];
     for (let i = 1; i < transactions.length; i++) {
-      const returnPercent = ((transactions[i].price - transactions[i-1].price) / transactions[i-1].price) * 100;
+      const returnPercent = ((transactions[i].price - transactions[i - 1].price) / transactions[i - 1].price) * 100;
       returns.push(returnPercent);
     }
 
     const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
     const volatility = Math.sqrt(returns.reduce((a, b) => a + Math.pow(b - avgReturn, 2), 0) / returns.length);
-    
+
     return volatility > 0 ? avgReturn / volatility : 1.5;
   } catch (error) {
     return 1.5;
@@ -545,14 +551,14 @@ const calculateRealPerformance = async (userId, days) => {
           totalPerformance += item.stockId.changePercent;
         }
       });
-      
+
       return portfolio.length > 0 ? totalPerformance / portfolio.length : 2.5;
     }
 
     // Calculate actual performance from transactions
     const firstValue = recentTransactions[0].price * recentTransactions[0].quantity;
     const lastValue = recentTransactions[recentTransactions.length - 1].price * recentTransactions[recentTransactions.length - 1].quantity;
-    
+
     return ((lastValue - firstValue) / firstValue) * 100;
   } catch (error) {
     return 2.5;
@@ -570,7 +576,7 @@ const calculateRealPerformanceHistory = async (userId) => {
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(today.getDate() - i);
-      
+
       const dayStart = new Date(date);
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(date);
@@ -623,7 +629,7 @@ const getRealisticMetrics = (holdings) => {
     maxDrawdown: Math.min(-2.0, Math.max(-15.0, -Math.abs(avgPerformance) * 0.5)),
     weeklyPerformance: Math.min(10, Math.max(-5, avgPerformance * 0.7)),
     monthlyPerformance: Math.min(25, Math.max(-10, avgPerformance * 1.5)),
-    performanceHistory: Array.from({ length: 7 }, () => 
+    performanceHistory: Array.from({ length: 7 }, () =>
       parseFloat(((Math.random() * 4) - 2 + avgPerformance * 0.1).toFixed(1))
     )
   };

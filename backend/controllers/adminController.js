@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const TradingRule = require('../models/TradingRule');
+const Stock = require('../models/Stock');
 
 // Get Dashboard Statistics
 const getDashboardStats = async (req, res) => {
@@ -10,6 +11,8 @@ const getDashboardStats = async (req, res) => {
         const activeUsers = await User.countDocuments({ isActive: true, role: 'user', approved: true });
         const pendingApprovals = await User.countDocuments({ approved: false, isVerified: true });
         const premiumUsers = await User.countDocuments({ role: 'premium' });
+        const suspendedUsers = await User.countDocuments({ isActive: false, approved: true });
+        const adminUsers = await User.countDocuments({ role: 'admin' });
 
         // Trading Stats
         const totalTrades = await Transaction.countDocuments();
@@ -24,6 +27,86 @@ const getDashboardStats = async (req, res) => {
             lastBackup: new Date(Date.now() - 24 * 60 * 60 * 1000)
         };
 
+        // Calculate Online Users (active in last 15 minutes)
+        const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const onlineUsers = await User.countDocuments({
+            lastActive: { $gte: fifteenMinsAgo },
+            role: 'user'
+        });
+
+        // Calculate Today's Volume
+        const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+        const sevenDaysAgo = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        const todayVolumeResult = await Transaction.aggregate([
+            { $match: { createdAt: { $gte: todayStart }, status: 'COMPLETED' } },
+            { $group: { _id: null, totalVolume: { $sum: '$totalAmount' } } }
+        ]);
+        const todayVolume = todayVolumeResult.length > 0 ? todayVolumeResult[0].totalVolume : 0;
+
+        // User Growth Data (Last 7 Days)
+        const userGrowth = await User.aggregate([
+            { $match: { createdAt: { $gte: sevenDaysAgo }, role: 'user' } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        // Trading Volume Data (Last 7 Days)
+        const tradeVolumeHistory = await Transaction.aggregate([
+            { $match: { createdAt: { $gte: sevenDaysAgo }, status: 'COMPLETED' } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    volume: { $sum: "$totalAmount" },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        // Top Stocks by Volume
+        const topStocks = await Stock.find({ isActive: true })
+            .sort({ volume: -1 })
+            .limit(5)
+            .select('symbol currentPrice changePercent volume');
+
+        // Sector Performance
+        const sectorPerformance = await Stock.getSectorPerformance();
+
+        // Fetch Recent Activities
+        const recentJoins = await User.find({ role: 'user' })
+            .select('fullName createdAt username')
+            .sort({ createdAt: -1 })
+            .limit(5);
+
+        const recentTrades = await Transaction.find({ status: 'COMPLETED' })
+            .populate('userId', 'fullName username')
+            .sort({ createdAt: -1 })
+            .limit(5);
+
+        const activities = [
+            ...recentJoins.map(u => ({
+                id: `join-${u._id}`,
+                user: u.fullName || u.username,
+                action: 'joined platform',
+                time: u.createdAt,
+                type: 'join'
+            })),
+            ...recentTrades.map(t => ({
+                id: `trade-${t._id}`,
+                user: t.userId?.fullName || t.userId?.username || 'Unknown',
+                action: `placed a ${t.type.toLowerCase()} order`,
+                stock: t.symbol,
+                time: t.createdAt,
+                type: 'trade'
+            }))
+        ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+
         res.json({
             success: true,
             stats: {
@@ -32,14 +115,25 @@ const getDashboardStats = async (req, res) => {
                     active: activeUsers,
                     pending: pendingApprovals,
                     premium: premiumUsers,
+                    suspended: suspendedUsers,
+                    admins: adminUsers,
+                    online: onlineUsers,
                     newToday: await User.countDocuments({
-                        createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+                        createdAt: { $gte: todayStart }
                     })
                 },
                 trading: {
                     totalTrades,
-                    // Add more complex aggregations if needed
+                    todayVolume,
+                    activeTradesDay: await Transaction.countDocuments({ createdAt: { $gte: todayStart } })
                 },
+                charts: {
+                    userGrowth,
+                    tradeVolumeHistory,
+                    topStocks,
+                    sectorPerformance
+                },
+                activities,
                 system: systemHealth
             }
         });
@@ -84,19 +178,44 @@ const getUsers = async (req, res) => {
 
         const total = await User.countDocuments(query);
 
+        // Fetch trade counts for these users
+        const userIds = users.map(u => u._id);
+        const tradeCounts = await Transaction.aggregate([
+            { $match: { userId: { $in: userIds }, status: 'COMPLETED' } },
+            { $group: { _id: '$userId', count: { $sum: 1 } } }
+        ]);
+
+        const tradeCountMap = tradeCounts.reduce((acc, curr) => {
+            acc[curr._id.toString()] = curr.count;
+            return acc;
+        }, {});
+
         // Transform data for frontend
         const formattedUsers = users.map(user => ({
             id: user._id,
             name: user.fullName,
-            email: user.contact.email, // Access nested email
-            phone: user.contact.mobile, // Access nested mobile
-            status: !user.approved ? 'pending' : (user.isActive ? 'active' : 'suspended'), // Include pending for approval
+            username: user.username,
+            email: user.contact.email,
+            phone: user.contact.mobile,
+            status: !user.approved ? 'pending' : (user.isActive ? 'active' : 'suspended'),
             approved: user.approved,
             role: user.role,
-            portfolioValue: user.portfolioValue,
-            totalTrades: 0, // Need to aggregate trades count for accuracy, mock 0 for list speed or do secondary query
+            portfolioValue: user.portfolioValue || 0,
+            portfolioChange: user.initialBalance > 0 ? parseFloat(((user.virtualBalance - user.initialBalance) / user.initialBalance * 100).toFixed(2)) : 0,
+            totalTrades: tradeCountMap[user._id.toString()] || 0,
             joinDate: user.createdAt,
-            lastLogin: user.createdAt // Mock last login as join date if not tracked
+            lastLogin: user.lastActive || user.createdAt,
+            virtualMoney: user.virtualBalance,
+            tradingLimit: user.tradingLimit || 500000,
+            notes: user.adminNotes || '',
+            suspensionReason: user.suspensionReason || '',
+            banReason: user.banReason || '',
+            // Add placeholders for frontend-only components to avoid NaN
+            successRate: 0,
+            rank: 0,
+            totalUsers: total,
+            lastTradeDate: user.createdAt,
+            portfolioChange: 0
         }));
 
         res.json({
@@ -150,30 +269,129 @@ const approveUser = async (req, res) => {
     }
 };
 
-// Update User Status (Suspend/Ban/Activate) - Existing, unchanged but now separate from approval
-const updateUserStatus = async (req, res) => {
+// Create User (Admin only)
+const createUser = async (req, res) => {
+    try {
+        const { name, email, phone, role, virtualMoney, tradingLimit, approved } = req.body;
+
+        // Basic check
+        if (!name || !email) {
+            return res.status(400).json({ success: false, message: 'Name and email are required' });
+        }
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ 'contact.email': email });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'User with this email already exists' });
+        }
+
+        // Create user with mock password (since admin is creating)
+        // In a real app, you'd send a reset link or a temporary password
+        const user = new User({
+            fullName: name,
+            contact: {
+                email,
+                mobile: phone || '',
+                countryCode: '+977',
+                address: 'N/A'
+            },
+            username: email.split('@')[0] + Math.floor(Math.random() * 1000),
+            password: 'TemporaryPassword123!', // Admin created
+            role: role || 'user',
+            virtualBalance: virtualMoney || 100000,
+            initialBalance: virtualMoney || 100000,
+            tradingLimit: tradingLimit || 500000,
+            approved: approved || false,
+            isVerified: true, // Admin created users are pre-verified
+            dob: new Date('2000-01-01'), // Mock DOB
+            gender: 'Male', // Mock Gender
+            nationality: 'Nepali', // Mock Nationality
+            citizenNo: 'Admin-' + Date.now(), // Mock Citizen No
+            agreements: { confirmInfo: true, confirmPaperTrading: true }
+        });
+
+        await user.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'User created successfully',
+            user: {
+                id: user._id,
+                name: user.fullName,
+                email: user.contact.email
+            }
+        });
+    } catch (error) {
+        console.error('Create user error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Failed to create user' });
+    }
+};
+
+// Update User (Admin only)
+const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body; // 'active', 'suspended', 'banned'
+        const updates = req.body;
 
         const user = await User.findById(id);
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        // Map frontend status to backend isActive
-        // If we want detailed status, we should ideally add a 'status' string field to User schema.
-        // For now simplest implementation:
+        // Map frontend fields to backend schema
+        if (updates.name) user.fullName = updates.name;
+        if (updates.email) user.contact.email = updates.email;
+        if (updates.phone) user.contact.mobile = updates.phone;
+        if (updates.role) user.role = updates.role;
+        if (updates.virtualMoney !== undefined) user.virtualBalance = updates.virtualMoney;
+        if (updates.approved !== undefined) user.approved = updates.approved;
+        if (updates.notes !== undefined) user.adminNotes = updates.notes;
+
+        // Handle status mapped to isActive
+        if (updates.status) {
+            user.isActive = updates.status === 'active';
+            if (updates.status === 'suspended') user.suspensionReason = updates.suspensionReason;
+            if (updates.status === 'banned') user.banReason = updates.banReason;
+        }
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'User updated successfully',
+            user: {
+                id: user._id,
+                name: user.fullName,
+                email: user.contact.email,
+                status: user.isActive ? 'active' : 'inactive'
+            }
+        });
+    } catch (error) {
+        console.error('Update user error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update user' });
+    }
+};
+
+// Update User Status (Suspend/Ban/Activate) - Existing, enhanced
+const updateUserStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, reason, notes } = req.body;
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
         if (status === 'active') {
             user.isActive = true;
         } else {
             user.isActive = false;
+            if (status === 'suspended') user.suspensionReason = reason;
+            if (status === 'banned') user.banReason = reason;
         }
 
-        // Basic implementation only toggles active state. 
-        // If user wants full 'banned' vs 'suspended', we should migration User schema.
-        // Let's implement schema change if we can, or just comments.
-        // For this step, we'll just toggle query.
+        if (notes) user.adminNotes = notes;
 
         await user.save();
 
@@ -251,6 +469,10 @@ const updateTradingRules = async (req, res) => {
             Object.keys(updatedRules).forEach(key => {
                 rules[key] = updatedRules[key];
             });
+            // Ensure nested objects are marked as modified
+            if (updatedRules.sectorLimits) {
+                rules.markModified('sectorLimits');
+            }
         }
 
         rules.lastUpdatedBy = adminId;
@@ -273,6 +495,8 @@ const updateTradingRules = async (req, res) => {
 module.exports = {
     getDashboardStats,
     getUsers,
+    createUser,
+    updateUser,
     approveUser,
     updateUserStatus,
     deleteUser,

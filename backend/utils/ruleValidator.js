@@ -81,19 +81,19 @@ const validateTrade = async ({ userId, type, quantity, price, stock, userBalance
         if (totalAmount < rules.minTradeAmount) {
             return {
                 valid: false,
-                error: `Minimum trade amount is ₹${rules.minTradeAmount}. Your trade amount: ₹${totalAmount}`
+                error: `Minimum trade amount is Rs. ${rules.minTradeAmount}. Your trade amount: Rs. ${totalAmount}`
             };
         }
 
-        // 2. Check per-trade limit
+        // 4. Check per-trade limit
         if (totalAmount > rules.perTradeLimit) {
             return {
                 valid: false,
-                error: `Per-trade limit is ₹${rules.perTradeLimit}. Your trade amount: ₹${totalAmount}`
+                error: `Per-trade limit is Rs. ${rules.perTradeLimit}. Your trade amount: Rs. ${totalAmount}`
             };
         }
 
-        // 3. Check daily trading limit (for BUY only)
+        // 5. Check daily trading limit (for BUY only)
         if (type === 'BUY') {
             const startOfDay = new Date();
             startOfDay.setHours(0, 0, 0, 0);
@@ -109,12 +109,50 @@ const validateTrade = async ({ userId, type, quantity, price, stock, userBalance
             if (todayTotal + totalAmount > rules.dailyTradeLimit) {
                 return {
                     valid: false,
-                    error: `Daily trading limit is ₹${rules.dailyTradeLimit}. You've already traded ₹${todayTotal} today. Remaining: ₹${rules.dailyTradeLimit - todayTotal}`
+                    error: `Daily trading limit is Rs. ${rules.dailyTradeLimit}. You've already traded Rs. ${todayTotal} today. Remaining: Rs. ${rules.dailyTradeLimit - todayTotal}`
+                };
+            }
+
+            // 6. Check max distinct stocks in portfolio
+            const existingPortfolios = await Portfolio.find({ userId });
+            const alreadyHolds = existingPortfolios.some(p => p.stockId.toString() === stock._id.toString());
+
+            if (!alreadyHolds && existingPortfolios.length >= rules.maxStocksPerTrade) {
+                return {
+                    valid: false,
+                    error: `You've reached the maximum limit of ${rules.maxStocksPerTrade} distinct stocks in your portfolio.`
+                };
+            }
+
+            // 7. Check max holding quantity for this specific stock
+            const existingPosition = existingPortfolios.find(p => p.stockId.toString() === stock._id.toString());
+            const currentQty = existingPosition ? existingPosition.quantity : 0;
+            if (currentQty + quantity > rules.maxHoldingsPerStock) {
+                return {
+                    valid: false,
+                    error: `Maximum holding limit for ${stock.symbol} is ${rules.maxHoldingsPerStock} shares. You already have ${currentQty}.`
                 };
             }
         }
 
-        // 4. Check sector exposure limits (for BUY only)
+        // 8. Check minimum holding period (for SELL only)
+        if (type === 'SELL') {
+            const portfolio = await Portfolio.findOne({ userId, stockId: stock._id });
+            if (portfolio) {
+                const purchaseDate = new Date(portfolio.updatedAt || portfolio.createdAt);
+                const daysHeld = (new Date() - purchaseDate) / (1000 * 60 * 60 * 24);
+
+                if (daysHeld < rules.minHoldingPeriod) {
+                    const remainingDays = Math.ceil(rules.minHoldingPeriod - daysHeld);
+                    return {
+                        valid: false,
+                        error: `Minimum holding period for ${stock.symbol} is ${rules.minHoldingPeriod} day(s). You can sell in ${remainingDays} day(s).`
+                    };
+                }
+            }
+        }
+
+        // 9. Check sector exposure limits (for BUY only)
         if (type === 'BUY' && stock.sector) {
             const portfolios = await Portfolio.find({ userId }).populate('stockId');
 
@@ -147,7 +185,7 @@ const validateTrade = async ({ userId, type, quantity, price, stock, userBalance
             }
         }
 
-        // 5. Check circuit breaker (if stock is paused due to volatility)
+        // 10. Check circuit breaker (if stock is paused due to volatility)
         if (rules.volatilityCircuitBreaker && stock._id) {
             const CircuitBreaker = require('../models/CircuitBreaker');
             const activeBreaker = await CircuitBreaker.findOne({
@@ -167,18 +205,21 @@ const validateTrade = async ({ userId, type, quantity, price, stock, userBalance
             }
         }
 
-        // 6. Check market hours
+        // 11. Check market hours (including pre-market)
         const now = new Date();
         const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-        if (currentTime < rules.marketOpenTime || currentTime > rules.marketCloseTime) {
+        const isPreMarket = currentTime >= rules.preMarketOpen && currentTime < rules.marketOpenTime;
+        const isMainMarket = currentTime >= rules.marketOpenTime && currentTime <= rules.marketCloseTime;
+
+        if (!isPreMarket && !isMainMarket) {
             return {
                 valid: false,
-                error: `Trading is only allowed between ${rules.marketOpenTime} and ${rules.marketCloseTime}. Current time: ${currentTime}`
+                error: `Trading is only allowed during Market Hours (${rules.marketOpenTime} - ${rules.marketCloseTime}) and Pre-Market (${rules.preMarketOpen} - ${rules.marketOpenTime}). Current time: ${currentTime}`
             };
         }
 
-        // 6. Check short selling (for SELL only)
+        // 12. Check short selling (for SELL only)
         if (type === 'SELL' && !rules.shortSellingAllowed) {
             // This is already checked in the trade controller by verifying portfolio
             // but we include it here for completeness
@@ -186,6 +227,7 @@ const validateTrade = async ({ userId, type, quantity, price, stock, userBalance
 
         // All validations passed
         return { valid: true };
+
 
     } catch (error) {
         console.error('Trade validation error:', error);

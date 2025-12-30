@@ -3,108 +3,37 @@ import styles from '../../admincss/SystemLogs.module.css';
 
 const SystemLogs = () => {
   // Initial log data
-  const [logs, setLogs] = useState([
-    { 
-      id: 1, 
-      timestamp: '2024-02-15 10:30:25', 
-      level: 'INFO', 
-      module: 'Authentication', 
-      message: 'User login successful: admin', 
-      user: 'admin',
-      ip: '192.168.1.1',
-      sessionId: 'sess_001'
-    },
-    { 
-      id: 2, 
-      timestamp: '2024-02-15 10:25:18', 
-      level: 'WARNING', 
-      module: 'Database', 
-      message: 'Connection pool at 80% capacity', 
-      user: 'system',
-      ip: '127.0.0.1',
-      sessionId: 'sess_system'
-    },
-    { 
-      id: 3, 
-      timestamp: '2024-02-15 10:20:12', 
-      level: 'ERROR', 
-      module: 'API', 
-      message: 'Failed to fetch market data from NEPSE', 
-      user: 'system',
-      ip: '127.0.0.1',
-      sessionId: 'sess_system'
-    },
-    { 
-      id: 4, 
-      timestamp: '2024-02-15 10:15:45', 
-      level: 'INFO', 
-      module: 'Competition', 
-      message: 'Competition "NEPSE Masters" started', 
-      user: 'admin',
-      ip: '192.168.1.10',
-      sessionId: 'sess_002'
-    },
-    { 
-      id: 5, 
-      timestamp: '2024-02-15 10:10:33', 
-      level: 'INFO', 
-      module: 'Trading', 
-      message: 'Trade executed: NABIL 100 shares @ ₹800', 
-      user: 'user123',
-      ip: '192.168.1.25',
-      sessionId: 'sess_003'
-    },
-    { 
-      id: 6, 
-      timestamp: '2024-02-15 10:05:21', 
-      level: 'DEBUG', 
-      module: 'Cache', 
-      message: 'Cache cleared for user preferences', 
-      user: 'system',
-      ip: '127.0.0.1',
-      sessionId: 'sess_system'
-    },
-    { 
-      id: 7, 
-      timestamp: '2024-02-15 10:00:15', 
-      level: 'ERROR', 
-      module: 'Payment', 
-      message: 'Payment verification failed', 
-      user: 'user456',
-      ip: '192.168.1.30',
-      sessionId: 'sess_004'
-    },
-    { 
-      id: 8, 
-      timestamp: '2024-02-15 09:55:42', 
-      level: 'INFO', 
-      module: 'Email', 
-      message: 'Competition reminder email sent', 
-      user: 'system',
-      ip: '127.0.0.1',
-      sessionId: 'sess_system'
-    },
-    { 
-      id: 9, 
-      timestamp: '2024-02-15 09:50:33', 
-      level: 'WARNING', 
-      module: 'Security', 
-      message: 'Multiple failed login attempts', 
-      user: 'unknown',
-      ip: '203.0.113.5',
-      sessionId: 'sess_blocked'
-    },
-    { 
-      id: 10, 
-      timestamp: '2024-02-15 09:45:28', 
-      level: 'INFO', 
-      module: 'Backup', 
-      message: 'Daily database backup completed', 
-      user: 'system',
-      ip: '127.0.0.1',
-      sessionId: 'sess_system'
-    },
-  ]);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch logs from API
+  const fetchLogs = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/monitoring/logs', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setLogs(data.logs);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      console.error('Error fetching logs:', err);
+      setError('Failed to load system logs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   const [filterLevel, setFilterLevel] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
@@ -162,10 +91,28 @@ const SystemLogs = () => {
     }
   };
 
-  const handleClearLogs = () => {
+  const handleClearLogs = async () => {
     if (window.confirm('Clear all logs? This action cannot be undone.')) {
-      setLogs([]);
-      setSelectedLog(null);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/monitoring/logs', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setLogs([]);
+          setSelectedLog(null);
+          alert('Logs cleared successfully');
+        } else {
+          alert(data.message || 'Failed to clear logs');
+        }
+      } catch (err) {
+        console.error('Error clearing logs:', err);
+        alert('Failed to clear logs');
+      }
     }
   };
 
@@ -211,6 +158,18 @@ const SystemLogs = () => {
       case 'WARNING': return styles.warningRow;
       default: return '';
     }
+  };
+
+  const formatTimestamp = (ts) => {
+    if (!ts) return 'N/A';
+    return new Date(ts).toLocaleString('en-GB', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).replace(',', '');
   };
 
   return (
@@ -386,14 +345,20 @@ const SystemLogs = () => {
                 </div>
                 
                 <div className={styles.tableBody}>
-                  {filteredLogs.map(log => (
+                  {loading ? (
+                    <div className={styles.tableRow}>
+                      <div className={styles.tableCell} style={{ gridColumn: '1 / -1', textAlign: 'center' }}>
+                        Loading logs...
+                      </div>
+                    </div>
+                  ) : filteredLogs.map(log => (
                     <div 
-                      key={log.id} 
-                      className={`${styles.tableRow} ${getLogColor(log.level)} ${selectedLog?.id === log.id ? styles.selected : ''}`}
+                      key={log._id} 
+                      className={`${styles.tableRow} ${getLogColor(log.level)} ${selectedLog?._id === log._id ? styles.selected : ''}`}
                       onClick={() => setSelectedLog(log)}
                     >
                       <div className={styles.tableCell}>
-                        <div className={styles.timeCell}>{log.timestamp}</div>
+                        <div className={styles.timeCell}>{formatTimestamp(log.timestamp)}</div>
                       </div>
                       
                       <div className={styles.tableCell}>
@@ -553,11 +518,11 @@ const SystemLogs = () => {
                 <h4>Basic Information</h4>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>ID:</span>
-                  <span className={styles.detailValue}>#{selectedLog.id}</span>
+                  <span className={styles.detailValue}>#{selectedLog._id.substring(0, 8)}...</span>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Timestamp:</span>
-                  <span className={styles.detailValue}>{selectedLog.timestamp}</span>
+                  <span className={styles.detailValue}>{formatTimestamp(selectedLog.timestamp)}</span>
                 </div>
                 <div className={styles.detailItem}>
                   <span className={styles.detailLabel}>Level:</span>
