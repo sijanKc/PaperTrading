@@ -3,8 +3,10 @@ import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
 import api from '../../services/api';
 import styles from './css/Analytics.module.css';
+import InvestmentAdvisor from '../../components/dashboard/InvestmentAdvisor';
 
 const Analytics = () => {
+
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('1m');
   const [loading, setLoading] = useState(true);
@@ -286,15 +288,17 @@ const Analytics = () => {
   };
 
   const Insights = ({ insights }) => {
-    if (!insights) return null;
     return (
       <div className={styles.insightsSection}>
+        {/* DSA POWERED: AI INVESTMENT ADVISOR */}
+        <InvestmentAdvisor />
+
         <div className={styles.sectionHeader}>
-          <h3>💡 smart Insights</h3>
+          <h3>💡 Market Insights</h3>
         </div>
 
         <div className={styles.insightsGrid}>
-          {insights.map((insight, index) => (
+          {insights && insights.map((insight, index) => (
             <div key={index} className={styles.insightCard}>
               <div className={styles.insightIcon}>{insight.icon}</div>
               <h4>{insight.title}</h4>

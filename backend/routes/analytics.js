@@ -8,6 +8,7 @@ const {
   getAllocationAnalysis,
   getAIInsights
 } = require('../controllers/analyticsController');
+const { getInvestmentRecommendations } = require('../controllers/recommendationController');
 
 // @route   GET /api/analytics/overview
 // @desc    Get portfolio analytics overview
@@ -33,5 +34,10 @@ router.get('/allocation', auth, getAllocationAnalysis);
 // @desc    Get AI-powered portfolio insights
 // @access  Private
 router.get('/insights', auth, getAIInsights);
+
+// @route   GET /api/analytics/recommendations
+// @desc    Get optimized investment recommendations (Knapsack DP)
+// @access  Private
+router.get('/recommendations', auth, getInvestmentRecommendations);
 
 module.exports = router;
