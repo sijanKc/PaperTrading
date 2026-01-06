@@ -55,6 +55,11 @@ const transactionSchema = new mongoose.Schema({
   strategy: {
     type: String,
     default: 'Not Specified'
+  },
+  competitionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Competition',
+    default: null
   }
 }, {
   timestamps: true

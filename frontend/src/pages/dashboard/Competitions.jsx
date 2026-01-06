@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
 import { Spinner, Alert, Modal, Table } from 'react-bootstrap';
 import styles from './css/Competitions.module.css';
 
 const Competitions = () => {
+  const navigate = useNavigate();
   const [competitions, setCompetitions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,13 +48,14 @@ const Competitions = () => {
       });
       const data = await response.json();
       if (data.success) {
+        alert('🎉 Successfully joined competition! You can now start trading using the "Trade Now" button or via the Trade page context selector.');
         // Refresh to show joined status
         fetchCompetitions();
       } else {
-        alert(data.message);
+        alert(data.message || 'Failed to join competition');
       }
     } catch (err) {
-      alert('Failed to join competition');
+      alert('Failed to join competition. Please check your connection.');
     }
   };
 
@@ -86,7 +89,7 @@ const Competitions = () => {
 
   const StatusBadge = ({ status }) => (
     <span className={`${styles.statusBadge} ${styles[status]}`}>
-      {status === 'active' ? '● Live' : status === 'upcoming' ? '⏱ Upcoming' : '✓ Completed'}
+      {status === 'active' ? '● LIVE ARENA' : status === 'upcoming' ? '⏱ UPCOMING' : '✓ COMPLETED'}
     </span>
   );
 
@@ -133,6 +136,24 @@ const Competitions = () => {
                     <span className={styles.statValue}>
                       {formatCurrency(competitions.reduce((acc, c) => acc + c.prizePool, 0))}
                     </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.guideBox}>
+                <h4>🎮 How to Play</h4>
+                <div className={styles.guideSteps}>
+                  <div className={styles.guideStep}>
+                    <span className={styles.stepNum}>1</span>
+                    <p><strong>Join:</strong> Choose an active competition and click "Join".</p>
+                  </div>
+                  <div className={styles.guideStep}>
+                    <span className={styles.stepNum}>2</span>
+                    <p><strong>Arena:</strong> Click "Trade Now" to enter the Competition Arena.</p>
+                  </div>
+                  <div className={styles.guideStep}>
+                    <span className={styles.stepNum}>3</span>
+                    <p><strong>Profit:</strong> Trade stocks using your competition-specific balance.</p>
                   </div>
                 </div>
               </div>
@@ -185,9 +206,25 @@ const Competitions = () => {
 
                     <div className={styles.cardFooter}>
                       {comp.isJoined ? (
-                        <button className={styles.viewBtn} onClick={() => fetchLeaderboard(comp)}>
-                          📊 View Leaderboard
-                        </button>
+                        <>
+                          {comp.status === 'active' ? (
+                            <button 
+                              className={styles.playBtn} 
+                              onClick={() => navigate(`/competition/${comp._id}/play`)}
+                            >
+                              🎮 PLAY IN ARENA
+                            </button>
+                          ) : comp.status === 'upcoming' ? (
+                            <div className={styles.upcomingBox}>
+                              <div className={styles.upcomingNote}>READY TO PLAY! 🚀</div>
+                              <small>Arena opens on {new Date(comp.startDate).toLocaleDateString()}</small>
+                            </div>
+                          ) : null}
+                          
+                          <button className={styles.viewBtn} style={{ marginTop: '0.5rem' }} onClick={() => fetchLeaderboard(comp)}>
+                            📊 View Leaderboard
+                          </button>
+                        </>
                       ) : (
                         <button 
                           className={styles.joinBtn} 

@@ -3,12 +3,14 @@ const Stock = require('../models/Stock');
 const Portfolio = require('../models/Portfolio');
 const Transaction = require('../models/Transaction');
 const Order = require('../models/Order');
+const Competition = require('../models/Competition');
+const CompetitionParticipant = require('../models/CompetitionParticipant');
 const { validateTrade } = require('../utils/ruleValidator');
 
 // Buy Stock
 const buyStock = async (req, res) => {
   try {
-    const { symbol, quantity } = req.body;
+    const { symbol, quantity, competitionId = null } = req.body;
     const userId = req.user._id;
 
     // Find stock
@@ -20,15 +22,64 @@ const buyStock = async (req, res) => {
       });
     }
 
-    // Get user with current balance
-    const user = await User.findById(userId);
+    let user = null;
+    let participant = null;
+    let competition = null;
+    let balance = 0;
+
+    // 1. Get Balance and Participation Context
+    if (competitionId) {
+      competition = await Competition.findById(competitionId);
+      if (!competition) return res.status(404).json({ success: false, message: 'Competition not found' });
+
+      participant = await CompetitionParticipant.findOne({ competitionId, userId });
+      if (!participant) {
+        return res.status(403).json({ success: false, message: 'You are not a participant in this competition' });
+      }
+
+      if (competition.status !== 'active') {
+        return res.status(400).json({ success: false, message: `Competition is ${competition.status}` });
+      }
+
+      balance = participant.currentBalance;
+
+      // 2. Competition Rule Validation (Simple for now)
+      if (competition.rules.allowedSectors && !competition.rules.allowedSectors.includes('All')) {
+        if (!competition.rules.allowedSectors.includes(stock.sector)) {
+          return res.status(400).json({
+            success: false,
+            message: `Trading for sector '${stock.sector}' is not allowed in this competition. Allowed: ${competition.rules.allowedSectors.join(', ')}`
+          });
+        }
+      }
+
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const tradesToday = await Transaction.countDocuments({
+        userId,
+        competitionId,
+        createdAt: { $gte: startOfDay }
+      });
+
+      if (tradesToday >= competition.rules.maxDailyTrades) {
+        return res.status(400).json({
+          success: false,
+          message: `Daily trade limit of ${competition.rules.maxDailyTrades} reached for this competition.`
+        });
+      }
+
+    } else {
+      user = await User.findById(userId);
+      balance = user.virtualBalance;
+    }
+
     const totalCost = quantity * stock.currentPrice;
 
-    // Check if user has enough balance
-    if (user.virtualBalance < totalCost) {
+    // Check if enough balance
+    if (balance < totalCost) {
       return res.status(400).json({
         success: false,
-        message: `Insufficient balance. Required: Rs. ${totalCost}, Available: Rs. ${user.virtualBalance.toFixed(2)}`
+        message: `Insufficient balance. Required: Rs. ${totalCost}, Available: Rs. ${balance.toFixed(2)}`
       });
     }
 
@@ -40,14 +91,14 @@ const buyStock = async (req, res) => {
       });
     }
 
-    // Validate against trading rules
+    // Validate against global trading rules (passing balance)
     const validation = await validateTrade({
       userId,
       type: 'BUY',
       quantity,
       price: stock.currentPrice,
       stock,
-      userBalance: user.virtualBalance
+      userBalance: balance
     });
 
     if (!validation.valid) {
@@ -57,8 +108,8 @@ const buyStock = async (req, res) => {
       });
     }
 
-    // Find existing portfolio entry
-    let portfolio = await Portfolio.findOne({ userId, stockId: stock._id });
+    // Find existing portfolio entry for this context
+    let portfolio = await Portfolio.findOne({ userId, stockId: stock._id, competitionId });
 
     if (portfolio) {
       // Update existing portfolio - Calculate new average price
@@ -78,14 +129,20 @@ const buyStock = async (req, res) => {
         quantity: quantity,
         averageBuyPrice: stock.currentPrice,
         totalInvestment: totalCost,
-        sector: stock.sector // Added missing sector field
+        sector: stock.sector,
+        competitionId
       });
     }
 
-    // Deduct from user balance
-    user.virtualBalance -= totalCost;
+    // Deduct balance
+    if (competitionId) {
+      participant.currentBalance -= totalCost;
+      participant.tradesCount += 1;
+    } else {
+      user.virtualBalance -= totalCost;
+    }
 
-    // Create transaction record
+    // Create records
     const transaction = new Transaction({
       userId,
       stockId: stock._id,
@@ -95,11 +152,11 @@ const buyStock = async (req, res) => {
       price: stock.currentPrice,
       totalAmount: totalCost,
       status: 'COMPLETED',
-      orderType: 'Market', // Default to Market for now
-      fees: 0 // Mock fees for now
+      orderType: 'Market',
+      fees: 0,
+      competitionId
     });
 
-    // Create order record
     const order = new Order({
       userId,
       stockId: stock._id,
@@ -110,26 +167,28 @@ const buyStock = async (req, res) => {
       totalAmount: totalCost,
       orderStatus: 'EXECUTED',
       executedPrice: stock.currentPrice,
-      executedAt: new Date()
+      executedAt: new Date(),
+      competitionId
     });
 
     // Save all changes
-    await Promise.all([
-      portfolio.save(),
-      user.save(),
-      transaction.save(),
-      order.save()
-    ]);
+    const savePromises = [portfolio.save(), transaction.save(), order.save()];
+    if (competitionId) {
+      savePromises.push(participant.save());
+    } else {
+      savePromises.push(user.save());
+    }
+    await Promise.all(savePromises);
 
     res.json({
       success: true,
-      message: `Successfully bought ${quantity} shares of ${stock.symbol} at Rs. ${stock.currentPrice}`,
+      message: `Successfully bought ${quantity} shares of ${stock.symbol} at Rs. ${stock.currentPrice} ${competitionId ? 'for competition' : ''}`,
       order: {
         symbol: stock.symbol,
         quantity: quantity,
         price: stock.currentPrice,
         totalAmount: totalCost,
-        remainingBalance: user.virtualBalance
+        remainingBalance: competitionId ? participant.currentBalance : user.virtualBalance
       }
     });
 
@@ -145,7 +204,7 @@ const buyStock = async (req, res) => {
 // Sell Stock
 const sellStock = async (req, res) => {
   try {
-    const { symbol, quantity } = req.body;
+    const { symbol, quantity, competitionId = null } = req.body;
     const userId = req.user._id;
 
     // Find stock
@@ -157,18 +216,30 @@ const sellStock = async (req, res) => {
       });
     }
 
-    // Find portfolio entry
-    const portfolio = await Portfolio.findOne({ userId, stockId: stock._id });
+    // Find portfolio entry for this context
+    const portfolio = await Portfolio.findOne({ userId, stockId: stock._id, competitionId });
 
     if (!portfolio || portfolio.quantity < quantity) {
       return res.status(400).json({
         success: false,
-        message: `Insufficient shares. You have ${portfolio?.quantity || 0} shares of ${symbol}`
+        message: `Insufficient shares. You have ${portfolio?.quantity || 0} shares of ${symbol} in this ${competitionId ? 'competition' : 'portfolio'}`
       });
     }
 
     const totalAmount = quantity * stock.currentPrice;
-    const user = await User.findById(userId);
+
+    let user = null;
+    let participant = null;
+    let balance = 0;
+
+    if (competitionId) {
+      participant = await CompetitionParticipant.findOne({ competitionId, userId });
+      if (!participant) return res.status(403).json({ success: false, message: 'Not a participant' });
+      balance = participant.currentBalance;
+    } else {
+      user = await User.findById(userId);
+      balance = user.virtualBalance;
+    }
 
     // Validate against trading rules
     const validation = await validateTrade({
@@ -177,7 +248,7 @@ const sellStock = async (req, res) => {
       quantity,
       price: stock.currentPrice,
       stock,
-      userBalance: user.virtualBalance
+      userBalance: balance
     });
 
     if (!validation.valid) {
@@ -191,17 +262,20 @@ const sellStock = async (req, res) => {
     const newQuantity = portfolio.quantity - quantity;
 
     if (newQuantity === 0) {
-      // Remove portfolio entry if no shares left
       await Portfolio.findByIdAndDelete(portfolio._id);
     } else {
-      // Update portfolio with remaining shares
       portfolio.quantity = newQuantity;
       portfolio.totalInvestment = portfolio.averageBuyPrice * newQuantity;
       await portfolio.save();
     }
 
-    // Add to user balance
-    user.virtualBalance += totalAmount;
+    // Add to balance
+    if (competitionId) {
+      participant.currentBalance += totalAmount;
+      participant.tradesCount += 1;
+    } else {
+      user.virtualBalance += totalAmount;
+    }
 
     // Create transaction record
     const transaction = new Transaction({
@@ -214,7 +288,8 @@ const sellStock = async (req, res) => {
       totalAmount: totalAmount,
       status: 'COMPLETED',
       orderType: 'Market',
-      fees: 0
+      fees: 0,
+      competitionId
     });
 
     // Create order record
@@ -228,25 +303,28 @@ const sellStock = async (req, res) => {
       totalAmount: totalAmount,
       orderStatus: 'EXECUTED',
       executedPrice: stock.currentPrice,
-      executedAt: new Date()
+      executedAt: new Date(),
+      competitionId
     });
 
     // Save all changes
-    await Promise.all([
-      user.save(),
-      transaction.save(),
-      order.save()
-    ]);
+    const savePromises = [transaction.save(), order.save()];
+    if (competitionId) {
+      savePromises.push(participant.save());
+    } else {
+      savePromises.push(user.save());
+    }
+    await Promise.all(savePromises);
 
     res.json({
       success: true,
-      message: `Successfully sold ${quantity} shares of ${stock.symbol} at Rs. ${stock.currentPrice}`,
+      message: `Successfully sold ${quantity} shares of ${stock.symbol} at Rs. ${stock.currentPrice} ${competitionId ? 'for competition' : ''}`,
       order: {
         symbol: stock.symbol,
         quantity: quantity,
         price: stock.currentPrice,
         totalAmount: totalAmount,
-        remainingBalance: user.virtualBalance
+        remainingBalance: competitionId ? participant.currentBalance : user.virtualBalance
       }
     });
 
@@ -263,8 +341,9 @@ const sellStock = async (req, res) => {
 const getPortfolio = async (req, res) => {
   try {
     const userId = req.user._id;
+    const { competitionId = null } = req.query;
 
-    const portfolio = await Portfolio.find({ userId })
+    const portfolio = await Portfolio.find({ userId, competitionId })
       .populate('stockId', 'symbol name currentPrice sector')
       .sort({ symbol: 1 });
 
@@ -275,7 +354,7 @@ const getPortfolio = async (req, res) => {
     const portfolioWithDetails = portfolio.map(item => {
       const currentValue = item.quantity * item.stockId.currentPrice;
       const profitLoss = currentValue - item.totalInvestment;
-      const profitLossPercentage = (profitLoss / item.totalInvestment) * 100;
+      const profitLossPercentage = item.totalInvestment > 0 ? (profitLoss / item.totalInvestment) * 100 : 0;
 
       totalPortfolioValue += currentValue;
       totalInvestment += item.totalInvestment;
@@ -298,20 +377,33 @@ const getPortfolio = async (req, res) => {
     const totalProfitLossPercentage = totalInvestment > 0 ?
       (totalProfitLoss / totalInvestment) * 100 : 0;
 
-    // Update user's portfolio value
-    await User.findByIdAndUpdate(userId, {
-      portfolioValue: totalPortfolioValue,
-      totalProfitLoss: totalProfitLoss
-    });
+    let balance = 0;
 
-    // Get latest user balance to ensure the frontend has it
-    const user = await User.findById(userId).select('virtualBalance');
+    if (competitionId) {
+      // Update competition participant record
+      const participant = await CompetitionParticipant.findOneAndUpdate(
+        { competitionId, userId },
+        {
+          portfolioValue: totalPortfolioValue,
+          totalProfitLoss: totalProfitLoss
+        },
+        { new: true }
+      );
+      balance = participant?.currentBalance || 0;
+    } else {
+      // Update user's main portfolio value
+      const user = await User.findByIdAndUpdate(userId, {
+        portfolioValue: totalPortfolioValue,
+        totalProfitLoss: totalProfitLoss
+      }, { new: true });
+      balance = user.virtualBalance;
+    }
 
     res.json({
       success: true,
       data: {
         holdings: portfolioWithDetails,
-        virtualBalance: user.virtualBalance,
+        virtualBalance: balance,
         summary: {
           totalPortfolioValue,
           totalInvestment,
@@ -334,15 +426,23 @@ const getPortfolio = async (req, res) => {
 const getTransactionHistory = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { limit = 50 } = req.query;
+    const { limit = 50, competitionId = null } = req.query;
 
-    const transactions = await Transaction.find({ userId })
+    const query = { userId, competitionId };
+
+    const transactions = await Transaction.find(query)
       .populate('stockId', 'symbol name')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit));
 
-    // Get latest user balance
-    const user = await User.findById(userId).select('virtualBalance');
+    let balance = 0;
+    if (competitionId) {
+      const participant = await CompetitionParticipant.findOne({ competitionId, userId });
+      balance = participant?.currentBalance || 0;
+    } else {
+      const user = await User.findById(userId).select('virtualBalance');
+      balance = user.virtualBalance;
+    }
 
     res.json({
       success: true,
@@ -359,7 +459,7 @@ const getTransactionHistory = async (req, res) => {
         fees: t.fees || 0,
         createdAt: t.createdAt
       })),
-      virtualBalance: user.virtualBalance
+      virtualBalance: balance
     });
 
   } catch (error) {

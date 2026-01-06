@@ -21,6 +21,7 @@ import HelpAndSupport from "./pages/dashboard/HelpAndSupport";
 import Settings from "./pages/dashboard/Settings";
 import Profile from "./pages/dashboard/Profile";
 import Competitions from "./pages/dashboard/Competitions";
+import CompetitionArena from "./pages/dashboard/CompetitionArena";
 import HealthCheck from "./pages/dashboard/HealthCheck";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -59,6 +60,7 @@ function App() {
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/competitions" element={<ProtectedRoute><Competitions /></ProtectedRoute>} />
+        <Route path="/competition/:id/play" element={<ProtectedRoute><CompetitionArena /></ProtectedRoute>} />
         <Route path="/health-check" element={<ProtectedRoute><HealthCheck /></ProtectedRoute>} />
 
         {/* Admin Routes */}

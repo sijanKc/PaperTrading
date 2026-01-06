@@ -31,7 +31,8 @@
 .header h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #3b82f6; /* Professional blue */
+  color: #3b82f6;
+  /* Professional blue */
   margin-bottom: 0.5rem;
 }
 
@@ -74,20 +75,24 @@
 }
 
 .buyTab {
-  color: #059669; /* Green for buy */
+  color: #059669;
+  /* Green for buy */
 }
 
 .sellTab {
-  color: #dc2626; /* Red for sell */
+  color: #dc2626;
+  /* Red for sell */
 }
 
 .tabActive.buyTab {
-  background: #10b981; /* Emerald green */
+  background: #10b981;
+  /* Emerald green */
   color: white;
 }
 
 .tabActive.sellTab {
-  background: #ef4444; /* Red */
+  background: #ef4444;
+  /* Red */
   color: white;
 }
 
@@ -151,18 +156,21 @@
 }
 
 .buyText {
-  color: #059669; /* Green */
+  color: #059669;
+  /* Green */
   font-weight: 600;
 }
 
 .sellText {
-  color: #dc2626; /* Red */
+  color: #dc2626;
+  /* Red */
   font-weight: 600;
 }
 
 .totalAmount {
   font-weight: 700;
-  color: #3b82f6; /* Blue */
+  color: #3b82f6;
+  /* Blue */
   font-size: 1.1rem;
 }
 
@@ -250,7 +258,8 @@
 
 .stockSymbol {
   font-weight: 700;
-  color: #3b82f6; /* Blue */
+  color: #3b82f6;
+  /* Blue */
   font-size: 1rem;
   margin-bottom: 0.1rem;
 }
@@ -266,11 +275,13 @@
 }
 
 .positive {
-  color: #059669; /* Green */
+  color: #059669;
+  /* Green */
 }
 
 .negative {
-  color: #dc2626; /* Red */
+  color: #dc2626;
+  /* Red */
 }
 
 .stockPrice {
@@ -365,7 +376,8 @@
   gap: 0.5rem;
 }
 
-.quickBuy, .quickSell {
+.quickBuy,
+.quickSell {
   flex: 1;
   padding: 0.5rem;
   border: none;
@@ -429,7 +441,8 @@
   min-width: 60px;
 }
 
-.buyBadge, .sellBadge {
+.buyBadge,
+.sellBadge {
   padding: 0.3rem 0.75rem;
   border-radius: 12px;
   font-size: 0.7rem;
@@ -453,7 +466,8 @@
 
 .activityStock {
   font-weight: 600;
-  color: #1e40af; /* Blue */
+  color: #1e40af;
+  /* Blue */
   margin-bottom: 0.2rem;
 }
 
@@ -487,7 +501,7 @@
   .dashboardMain {
     margin-left: 4rem;
   }
-  
+
   .mainGrid {
     grid-template-columns: 1fr;
   }
@@ -521,6 +535,182 @@
   .activityStatus {
     text-align: center;
   }
+}
+
+/* Competition Arena Styles */
+.arenaContainer {
+  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+  min-height: calc(100vh - 80px);
+}
+
+.arenaHeader {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.arenaTitle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.arenaTitle h2 {
+  color: #ffc107;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.arenaLiveDot {
+  width: 12px;
+  height: 12px;
+  background: #ff4757;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ff4757;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.arenaStats {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.arenaStatItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.arenaStatLabel {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.arenaStatValue {
+  font-size: 1.1rem;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.exitArenaBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.exitArenaBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.arenaForm {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 193, 7, 0.2) !important;
+}
+
+.contextSwitcher {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.contextSwitcher span {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.arenaSwitchBtn {
+  background: #ffc107;
+  color: #000;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+}
+
+.arenaSwitchBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 193, 7, 0.4);
+}
+
+.arenaTag {
+  color: #ffc107;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  display: block;
+  margin-bottom: -4px;
+}
+
+.rulesCard {
+  background: rgba(255, 193, 7, 0.05);
+  border: 1px dashed rgba(255, 193, 7, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.rulesCard h4 {
+  color: #ffc107;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.rulesCard ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rulesCard li {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.rulesCard strong {
+  color: #f8fafc;
 }
 
 /* Dark Theme */

@@ -32,12 +32,17 @@ const portfolioSchema = new mongoose.Schema({
   sector: {
     type: String,
     required: true
+  },
+  competitionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Competition',
+    default: null // null means main portfolio
   }
 }, {
   timestamps: true
 });
 
 // Create compound index for faster queries
-portfolioSchema.index({ userId: 1, stockId: 1 }, { unique: true });
+portfolioSchema.index({ userId: 1, stockId: 1, competitionId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Portfolio', portfolioSchema);

@@ -189,51 +189,30 @@ const CompetitionManager = () => {
   };
 
   // Update competition
-  const handleUpdateCompetition = () => {
+  const handleUpdateCompetition = async () => {
     if (!editingCompetition) return;
 
-    const duration = calculateDuration(newCompetition.startDate, newCompetition.endDate);
-    const status = new Date(newCompetition.startDate) > new Date() ? 'upcoming' : 'active';
-
-    setCompetitions(prev =>
-      prev.map(comp =>
-        comp.id === editingCompetition.id
-          ? {
-              ...comp,
-              ...newCompetition,
-              status,
-              duration: `${duration} days`
-            }
-          : comp
-      )
-    );
-
-    setShowCreateForm(false);
-    setEditingCompetition(null);
-    setNewCompetition({
-      name: '',
-      description: '',
-      type: 'public',
-      startDate: '',
-      endDate: '',
-      duration: 30,
-      maxParticipants: 100,
-      entryFee: 0,
-      prizePool: 0,
-      startingBalance: 100000,
-      rules: {
-        maxDailyTrades: 10,
-        allowedSectors: ['All'],
-        minHoldingPeriod: 1,
-        shortSelling: false,
-        marginTrading: false
-      },
-      prizes: [
-        { position: 1, prize: 'Champion Trophy' },
-        { position: 2, prize: 'Runner-up Certificate' },
-        { position: 3, prize: 'Consolation Prize' }
-      ]
-    });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/competitions/${editingCompetition._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newCompetition)
+      });
+      const data = await response.json();
+      if (data.success) {
+        setShowCreateForm(false);
+        setEditingCompetition(null);
+        fetchCompetitions();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error('Error updating competition:', error);
+    }
   };
 
   // Delete competition
@@ -241,13 +220,15 @@ const CompetitionManager = () => {
     if (window.confirm('Are you sure you want to delete this competition?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/admin/competitions/${id}`, {
+        const response = await fetch(`http://localhost:5000/api/competitions/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
         if (data.success) {
           fetchCompetitions();
+        } else {
+          alert(data.message);
         }
       } catch (error) {
         console.error('Error deleting competition:', error);
@@ -256,14 +237,26 @@ const CompetitionManager = () => {
   };
 
   // Change competition status
-  const handleStatusChange = (id, newStatus) => {
-    setCompetitions(prev =>
-      prev.map(comp =>
-        comp.id === id
-          ? { ...comp, status: newStatus }
-          : comp
-      )
-    );
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/competitions/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchCompetitions();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
   };
 
   // Add participant
@@ -317,7 +310,7 @@ const CompetitionManager = () => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'NPR',
       minimumFractionDigits: 0
     }).format(amount);
   };
@@ -815,7 +808,7 @@ const CompetitionManager = () => {
           
           <div className={styles.competitionsGrid}>
             {filteredCompetitions.map(competition => (
-              <div key={competition.id} className={styles.competitionCard}>
+              <div key={competition._id} className={styles.competitionCard}>
                 <div className={styles.cardHeader}>
                   <div className={styles.competitionInfo}>
                     <h3 className={styles.competitionName}>{competition.name}</h3>
@@ -909,7 +902,7 @@ const CompetitionManager = () => {
                     {competition.status === 'active' && (
                       <button 
                         className={`${styles.actionButton} ${styles.endButton}`}
-                        onClick={() => handleStatusChange(competition.id, 'completed')}
+                        onClick={() => handleStatusChange(competition._id, 'completed', competition)}
                       >
                         ✅ End
                       </button>
@@ -918,7 +911,7 @@ const CompetitionManager = () => {
                     {competition.status === 'upcoming' && (
                       <button 
                         className={`${styles.actionButton} ${styles.startButton}`}
-                        onClick={() => handleStatusChange(competition.id, 'active')}
+                        onClick={() => handleStatusChange(competition._id, 'active', competition)}
                       >
                         🚀 Start
                       </button>
@@ -926,7 +919,7 @@ const CompetitionManager = () => {
                     
                     <button 
                       className={`${styles.actionButton} ${styles.deleteButton}`}
-                      onClick={() => handleDeleteCompetition(competition.id)}
+                      onClick={() => handleDeleteCompetition(competition._id)}
                     >
                       🗑️ Delete
                     </button>

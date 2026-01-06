@@ -39,6 +39,43 @@ const MarketOverview = ({ marketData, getChangeColor, getChangeIcon }) => (
   </div>
 );
 
+const ArenaHeader = ({ competition, onExit }) => (
+  <div className={styles.arenaHeader}>
+    <div className={styles.arenaTitle}>
+      <span className={styles.arenaLiveDot}></span>
+      <div>
+        <small className={styles.arenaTag}>COMPETITION ARENA</small>
+        <h2>{competition.name}</h2>
+      </div>
+    </div>
+    <div className={styles.arenaStats}>
+      <div className={styles.arenaStatItem}>
+        <span className={styles.arenaStatLabel}>ARENA CASH</span>
+        <span className={styles.arenaStatValue}>Rs. {competition.startingBalance.toLocaleString()}</span>
+      </div>
+      <div className={styles.arenaStatItem}>
+        <span className={styles.arenaStatLabel}>MY BALANCE</span>
+        <span id="arenaBalance" className={styles.arenaStatValue} style={{ color: '#ffc107' }}>Loading...</span>
+      </div>
+      <button className={styles.exitArenaBtn} onClick={onExit}>
+        🚪 Exit Arena
+      </button>
+    </div>
+  </div>
+);
+
+const CompetitionRules = ({ competition }) => (
+  <div className={styles.rulesCard}>
+    <h4>🎮 Contest Rules</h4>
+    <ul>
+      <li>🏢 <strong>Sectors:</strong> {competition.rules?.allowedSectors?.join(', ') || 'All Sectors'}</li>
+      <li>🔄 <strong>Daily Limit:</strong> {competition.rules?.maxDailyTrades} Trades</li>
+      <li>⏳ <strong>Ends On:</strong> {new Date(competition.endDate).toLocaleDateString()}</li>
+      <li>🎯 <strong>Goal:</strong> Gain maximum profit to top the leaderboard!</li>
+    </ul>
+  </div>
+);
+
 const TradeForm = ({ 
   activeTab, 
   setActiveTab, 
@@ -50,12 +87,27 @@ const TradeForm = ({
   calculateTotalValue, 
   executeTrade, 
   loading, 
-  error 
+  error,
+  selectedCompetitionId,
+  setSelectedCompetitionId,
+  joinedCompetitions
 }) => {
   const selectedStock = marketData.find(s => s.symbol === tradeData.symbol);
   
+  // Filter market data based on competition rules if selected
+  const activeCompetition = joinedCompetitions.find(c => c._id === selectedCompetitionId);
+  const filteredMarketData = activeCompetition && activeCompetition.rules?.allowedSectors && !activeCompetition.rules.allowedSectors.includes('All')
+    ? marketData.filter(stock => 
+        // stock.sector might be missing in marketData if it's simplified, 
+        // but here it's expected to be populated
+        activeCompetition.rules.allowedSectors.includes(stock.sector)
+      )
+    : marketData;
+  
   return (
-    <div className={styles.tradeForm}>
+    <div className={`${styles.tradeForm} ${selectedCompetitionId ? styles.arenaForm : ''}`}>
+
+
       <div className={styles.formTabs}>
         <button
           onClick={() => setActiveTab('buy')}
@@ -98,8 +150,8 @@ const TradeForm = ({
                 ))
               )
             ) : (
-              // BUY: Show all market stocks
-              marketData.map(stock => (
+              // BUY: Show filtered market stocks
+              filteredMarketData.map(stock => (
                 <option key={stock.symbol} value={stock.symbol}>
                   {stock.symbol} - {stock.name} (Rs. {stock.price})
                 </option>
@@ -323,6 +375,28 @@ const Trade = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userBalance, setUserBalance] = useState(0);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
+  const [joinedCompetitions, setJoinedCompetitions] = useState([]);
+
+  // Fetch joined competitions
+  const fetchJoinedCompetitions = useCallback(async () => {
+    try {
+      const response = await api.get('/competitions');
+      if (response.data.success) {
+        const joined = response.data.data.filter(c => c.isJoined && c.status === 'active');
+        setJoinedCompetitions(joined);
+        
+        // Check if there's a competitionId in URL
+        const queryParams = new URLSearchParams(window.location.search);
+        const compId = queryParams.get('competitionId');
+        if (compId && joined.some(c => c._id === compId)) {
+          setSelectedCompetitionId(compId);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching competitions:', error);
+    }
+  }, []);
 
   // Fetch market data from backend
   const fetchMarketData = useCallback(async () => {
@@ -333,6 +407,8 @@ const Trade = () => {
           symbol: stock.symbol,
           name: stock.name,
           price: stock.currentPrice,
+          currentPrice: stock.currentPrice,
+          sector: stock.sector,
           change: stock.currentPrice - (stock.previousClose || stock.currentPrice),
           changePercent: stock.previousClose 
             ? ((stock.currentPrice - stock.previousClose) / stock.previousClose * 100).toFixed(2)
@@ -349,20 +425,32 @@ const Trade = () => {
   // Fetch portfolio from backend
   const fetchPortfolio = useCallback(async () => {
     try {
-      const response = await api.get('/trade/portfolio');
+      const url = selectedCompetitionId 
+        ? `/trade/portfolio?competitionId=${selectedCompetitionId}`
+        : '/trade/portfolio';
+      const response = await api.get(url);
       if (response.data.success) {
         setPortfolio(response.data.data.holdings || []);
         setUserBalance(response.data.data.virtualBalance || 0);
+        
+        // Also update arena header balance if exists
+        const arenaBal = document.getElementById('arenaBalance');
+        if (arenaBal) {
+          arenaBal.innerText = `Rs. ${response.data.data.virtualBalance?.toLocaleString()}`;
+        }
       }
     } catch (error) {
       console.error('Error fetching portfolio:', error);
     }
-  }, []);
+  }, [selectedCompetitionId]);
 
   // Fetch transaction history
   const fetchTransactions = useCallback(async () => {
     try {
-      const response = await api.get('/trade/transactions');
+      const url = selectedCompetitionId
+        ? `/trade/transactions?competitionId=${selectedCompetitionId}`
+        : '/trade/transactions';
+      const response = await api.get(url);
       if (response.data.success) {
         setRecentTrades(response.data.data.slice(0, 5) || []); // Get last 5 trades
         if (response.data.virtualBalance !== undefined) {
@@ -372,14 +460,20 @@ const Trade = () => {
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
-  }, []);
+  }, [selectedCompetitionId]);
 
   // Initial fetches
   useEffect(() => {
     fetchMarketData();
+    fetchJoinedCompetitions();
+  }, [fetchMarketData, fetchJoinedCompetitions]);
+
+  useEffect(() => {
     fetchPortfolio();
     fetchTransactions();
+  }, [fetchPortfolio, fetchTransactions]);
 
+  useEffect(() => {
     // Refresh market data every 2 minutes - only if enabled
     const isAutoRefreshEnabled = localStorage.getItem('autoRefresh') !== 'false';
     
@@ -391,7 +485,7 @@ const Trade = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [fetchMarketData, fetchPortfolio, fetchTransactions]);
+  }, [fetchMarketData]);
 
   const handleInputChange = (field, value) => {
     // If quantity, only allow positive integers
@@ -433,7 +527,8 @@ const Trade = () => {
         price: tradeData.orderType === 'market' 
           ? selectedStock?.price 
           : parseFloat(tradeData.price),
-        orderType: tradeData.orderType
+        orderType: tradeData.orderType,
+        competitionId: selectedCompetitionId || null
       };
 
       console.log(`Executing ${activeTab.toUpperCase()} trade:`, tradePayload);
@@ -487,11 +582,33 @@ const Trade = () => {
       <div className={styles.dashboardMain}>
         <Header />
         
-        <main className={styles.tradeContainer}>
-          <div className={styles.header}>
-            <h1>💹 Trade Stocks</h1>
-            <p>Execute buy and sell orders in real-time (Market updates every 2 mins)</p>
-          </div>
+        <main className={`${styles.tradeContainer} ${selectedCompetitionId ? styles.arenaContainer : ''}`}>
+          {selectedCompetitionId && joinedCompetitions.find(c => c._id === selectedCompetitionId) ? (
+            <ArenaHeader 
+              competition={joinedCompetitions.find(c => c._id === selectedCompetitionId)} 
+              onExit={() => setSelectedCompetitionId('')}
+            />
+          ) : (
+            <div className={styles.header}>
+              <h1>💹 Trade Stocks</h1>
+              <p>Execute buy and sell orders in real-time (Market updates every 2 mins)</p>
+              
+              {joinedCompetitions.length > 0 && (
+                <div className={styles.contextSwitcher}>
+                  <span>Switch to: </span>
+                  {joinedCompetitions.map(comp => (
+                    <button 
+                      key={comp._id} 
+                      className={styles.arenaSwitchBtn}
+                      onClick={() => setSelectedCompetitionId(comp._id)}
+                    >
+                      🏆 {comp.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className={styles.mainGrid}>
             <div className={styles.leftColumn}>
@@ -507,6 +624,9 @@ const Trade = () => {
                 executeTrade={executeTrade}
                 loading={loading}
                 error={error}
+                selectedCompetitionId={selectedCompetitionId}
+                setSelectedCompetitionId={setSelectedCompetitionId}
+                joinedCompetitions={joinedCompetitions}
               />
               <PortfolioOverview 
                 portfolio={portfolio}
@@ -523,6 +643,11 @@ const Trade = () => {
               <RecentActivity 
                 recentTrades={recentTrades}
               />
+              {selectedCompetitionId && joinedCompetitions.find(c => c._id === selectedCompetitionId) && (
+                <CompetitionRules 
+                  competition={joinedCompetitions.find(c => c._id === selectedCompetitionId)} 
+                />
+              )}
             </div>
           </div>
         </main>

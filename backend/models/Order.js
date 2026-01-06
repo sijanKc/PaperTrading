@@ -49,6 +49,11 @@ const orderSchema = new mongoose.Schema({
   },
   note: {
     type: String  // For stop-loss, circuit breaker, etc.
+  },
+  competitionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Competition',
+    default: null
   }
 }, {
   timestamps: true

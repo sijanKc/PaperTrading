@@ -12,5 +12,8 @@ router.post('/:id/join', auth, competitionController.joinCompetition);
 
 // Admin only routes
 router.post('/', [auth, adminMiddleware], competitionController.createCompetition);
+router.put('/:id', [auth, adminMiddleware], competitionController.updateCompetition);
+router.patch('/:id/status', [auth, adminMiddleware], competitionController.updateCompetitionStatus);
+router.delete('/:id', [auth, adminMiddleware], competitionController.deleteCompetition);
 
 module.exports = router;

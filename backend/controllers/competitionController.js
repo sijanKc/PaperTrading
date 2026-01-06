@@ -35,18 +35,37 @@ const getAllCompetitions = async (req, res) => {
 
         const competitions = await Competition.find(query).sort({ createdAt: -1 });
 
-        // Count participants for each competition
-        const competitionsWithCounts = await Promise.all(competitions.map(async (comp) => {
+        // Count participants and check if current user is joined
+        const competitionsWithDetails = await Promise.all(competitions.map(async (comp) => {
             const participantCount = await CompetitionParticipant.countDocuments({ competitionId: comp._id });
+            const isJoined = req.user ? await CompetitionParticipant.exists({
+                competitionId: comp._id,
+                userId: req.user._id
+            }) : false;
+
+            const now = new Date();
+            let effectiveStatus = comp.status;
+
+            // Robust Status Resolve
+            if (comp.status === 'completed' || now > new Date(comp.endDate)) {
+                effectiveStatus = 'completed';
+            } else if (comp.status === 'active' || now >= new Date(comp.startDate)) {
+                effectiveStatus = 'active';
+            } else {
+                effectiveStatus = 'upcoming';
+            }
+
             return {
                 ...comp.toObject(),
-                participantsCount: participantCount
+                status: effectiveStatus, // Override with dynamic status
+                participantsCount: participantCount,
+                isJoined: !!isJoined
             };
         }));
 
         res.json({
             success: true,
-            data: competitionsWithCounts
+            data: competitionsWithDetails
         });
     } catch (error) {
         console.error('Get competitions error:', error);
@@ -65,10 +84,23 @@ const getCompetitionDetails = async (req, res) => {
         const participantCount = await CompetitionParticipant.countDocuments({ competitionId: competition._id });
         const isJoined = req.user ? await CompetitionParticipant.exists({ competitionId: competition._id, userId: req.user._id }) : false;
 
+        const now = new Date();
+        let effectiveStatus = competition.status;
+
+        // Robust Status Resolve
+        if (competition.status === 'completed' || now > new Date(competition.endDate)) {
+            effectiveStatus = 'completed';
+        } else if (competition.status === 'active' || now >= new Date(competition.startDate)) {
+            effectiveStatus = 'active';
+        } else {
+            effectiveStatus = 'upcoming';
+        }
+
         res.json({
             success: true,
             data: {
                 ...competition.toObject(),
+                status: effectiveStatus,
                 participantsCount: participantCount,
                 isJoined: !!isJoined
             }
@@ -154,10 +186,61 @@ const getCompetitionLeaderboard = async (req, res) => {
     }
 };
 
+// Update Competition (Admin only)
+const updateCompetition = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const competition = await Competition.findByIdAndUpdate(id, req.body, { new: true });
+        if (!competition) {
+            return res.status(404).json({ success: false, message: 'Competition not found' });
+        }
+        res.json({ success: true, message: 'Competition updated successfully', data: competition });
+    } catch (error) {
+        console.error('Update competition error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update competition' });
+    }
+};
+
+// Update Competition Status (Admin only)
+const updateCompetitionStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const competition = await Competition.findByIdAndUpdate(id, { status }, { new: true });
+        if (!competition) {
+            return res.status(404).json({ success: false, message: 'Competition not found' });
+        }
+        res.json({ success: true, message: 'Competition status updated successfully', data: competition });
+    } catch (error) {
+        console.error('Update status error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update status' });
+    }
+};
+
+// Delete Competition (Admin only)
+const deleteCompetition = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const competition = await Competition.findByIdAndDelete(id);
+        if (!competition) {
+            return res.status(404).json({ success: false, message: 'Competition not found' });
+        }
+        // Also delete participants
+        await CompetitionParticipant.deleteMany({ competitionId: id });
+        res.json({ success: true, message: 'Competition deleted successfully' });
+    } catch (error) {
+        console.error('Delete competition error:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete competition' });
+    }
+};
+
 module.exports = {
     createCompetition,
     getAllCompetitions,
     getCompetitionDetails,
     joinCompetition,
-    getCompetitionLeaderboard
+    getCompetitionLeaderboard,
+    updateCompetition,
+    updateCompetitionStatus,
+    deleteCompetition
 };
