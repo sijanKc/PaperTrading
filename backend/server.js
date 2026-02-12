@@ -1,9 +1,22 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
+
+// Rate limiting for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: {
+    success: false,
+    message: 'Too many login attempts. Please try again after 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Middleware
 app.use(cors());
@@ -61,7 +74,8 @@ const loadInitialStocks = async () => {
 connectDB();
 
 // ==================== ROUTES ====================
-app.use('/api/auth', require('./routes/auth'));
+// Apply rate limiting to auth routes
+app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/stocks', require('./routes/stocks'));
 app.use('/api/trade', require('./routes/trade'));
 

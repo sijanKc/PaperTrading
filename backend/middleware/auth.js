@@ -46,9 +46,15 @@ const auth = async (req, res, next) => {
       });
     }
 
-    // Update lastActive timestamp
-    user.lastActive = new Date();
-    await user.save({ validateBeforeSave: false });
+    // Update lastActive timestamp (throttled to once per 5 minutes)
+    const lastUpdate = user.lastActive ? new Date(user.lastActive) : new Date(0);
+    const timeSinceUpdate = Date.now() - lastUpdate.getTime();
+    const FIVE_MINUTES = 5 * 60 * 1000;
+
+    if (timeSinceUpdate > FIVE_MINUTES) {
+      user.lastActive = new Date();
+      await user.save({ validateBeforeSave: false });
+    }
 
     req.user = user;
     next();

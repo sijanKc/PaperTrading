@@ -31,10 +31,10 @@ const InvestmentAdvisor = () => {
         <div className={styles.advisorContainer}>
             <div className={styles.advisorHeader}>
                 <div className={styles.headerInfo}>
-                    <h2>🧠 AI Portfolio Optimizer (Knapsack DP)</h2>
+                    <h2>🧠 Portfolio Optimizer (Knapsack DP)</h2>
                     <p>Mathematically optimize your portfolio to maximize predicted returns within your budget.</p>
                 </div>
-                <button 
+                <button
                     className={styles.optimizeBtn}
                     onClick={handleOptimize}
                     disabled={loading}
@@ -94,7 +94,7 @@ const InvestmentAdvisor = () => {
                             <span className={styles.summaryLabel}>Total Investment</span>
                             <span className={styles.summaryValue}>{formatCurrency(recommendation.budgetUsed)}</span>
                         </div>
-                        
+
                         <div className={styles.summaryItem}>
                             <span className={styles.summaryLabel}>Profit Potential (Score)</span>
                             <span className={`${styles.summaryValue} ${styles.profitValue}`}>
@@ -111,7 +111,7 @@ const InvestmentAdvisor = () => {
 
                         <div className={styles.algobadge}>
                             <strong>Algorithm Info:</strong><br />
-                            This recommendation uses the **Unbounded Knapsack Algorithm** (Dynamic Programming). 
+                            This recommendation uses the **Unbounded Knapsack Algorithm** (Dynamic Programming).
                             Complexity: O(W × N).
                         </div>
                     </div>
