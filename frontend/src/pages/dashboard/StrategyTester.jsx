@@ -5,6 +5,305 @@ import Header from "../../components/dashboard/Header";
 import api from '../../services/api';
 import styles from './css/StrategyTester.module.css';
 
+// --- Helper Functions ---
+
+const getProfitColor = (value) => {
+  return value >= 0 ? styles.textSuccess : styles.textDanger;
+};
+
+const getPerformanceColor = (value) => {
+  if (value >= 4) return styles.performanceExcellent;
+  if (value >= 2) return styles.performanceGood;
+  if (value >= 1) return styles.performanceFair;
+  return styles.performancePoor;
+};
+
+const formatCurrency = (amount) => {
+  if (amount === undefined || amount === null) return 'Rs. 0.00';
+  return `Rs. ${amount.toLocaleString('en-NP', { minimumFractionDigits: 2 })}`;
+};
+
+// --- Sub-Components ---
+
+const StrategyForm = ({ strategy, handleInputChange, stocks, isTesting, runBacktest, error }) => (
+  <div className={styles.strategyForm}>
+    <div className={styles.formGrid}>
+      <div className={styles.formGroup}>
+        <label>Strategy Name</label>
+        <input
+          type="text"
+          value={strategy.name}
+          onChange={(e) => handleInputChange('name', e.target.value)}
+          placeholder="Enter strategy name"
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Stock Symbol</label>
+        <select
+          value={strategy.symbol}
+          onChange={(e) => handleInputChange('symbol', e.target.value)}
+        >
+          {stocks.length > 0 ? (
+            stocks.map(s => (
+              <option key={s._id} value={s.symbol}>{s.symbol} - {s.name}</option>
+            ))
+          ) : (
+            <>
+              <option value="NTC">NTC</option>
+              <option value="NABIL">NABIL</option>
+              <option value="SCB">SCB</option>
+            </>
+          )}
+        </select>
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Timeframe</label>
+        <select
+          value={strategy.timeframe}
+          onChange={(e) => handleInputChange('timeframe', e.target.value)}
+        >
+          <option value="1D">1 Day</option>
+          <option value="1H">1 Hour</option>
+          <option value="15M">15 Minutes</option>
+          <option value="5M">5 Minutes</option>
+        </select>
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Initial Capital (Rs.)</label>
+        <input
+          type="number"
+          value={strategy.initialCapital}
+          onChange={(e) => handleInputChange('initialCapital', parseInt(e.target.value))}
+          min="1000"
+          step="1000"
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>Start Date</label>
+        <input
+          type="date"
+          value={strategy.startDate}
+          onChange={(e) => handleInputChange('startDate', e.target.value)}
+        />
+      </div>
+
+      <div className={styles.formGroup}>
+        <label>End Date</label>
+        <input
+          type="date"
+          value={strategy.endDate}
+          onChange={(e) => handleInputChange('endDate', e.target.value)}
+        />
+      </div>
+    </div>
+
+    <div className={styles.parametersSection}>
+      <h4>Strategy Parameters</h4>
+      <div className={styles.parametersGrid}>
+        <div className={styles.parameterGroup}>
+          <label>Fast MA Period</label>
+          <input
+            type="number"
+            value={strategy.fastMA}
+            onChange={(e) => handleInputChange('fastMA', parseInt(e.target.value))}
+            min="5"
+            max="100"
+          />
+        </div>
+
+        <div className={styles.parameterGroup}>
+          <label>Slow MA Period</label>
+          <input
+            type="number"
+            value={strategy.slowMA}
+            onChange={(e) => handleInputChange('slowMA', parseInt(e.target.value))}
+            min="10"
+            max="200"
+          />
+        </div>
+
+        <div className={styles.parameterGroup}>
+          <label>Stop Loss (%)</label>
+          <input
+            type="number"
+            value={strategy.stopLoss}
+            onChange={(e) => handleInputChange('stopLoss', parseFloat(e.target.value))}
+            min="0.1"
+            max="10"
+            step="0.1"
+          />
+        </div>
+
+        <div className={styles.parameterGroup}>
+          <label>Take Profit (%)</label>
+          <input
+            type="number"
+            value={strategy.takeProfit}
+            onChange={(e) => handleInputChange('takeProfit', parseFloat(e.target.value))}
+            min="0.1"
+            max="20"
+            step="0.1"
+          />
+        </div>
+      </div>
+    </div>
+
+    <button
+      className={styles.testButton}
+      onClick={runBacktest}
+      disabled={isTesting}
+    >
+      {isTesting ? (
+        <>
+          <Spinner animation="border" size="sm" className="me-2" />
+          Running Backtest...
+        </>
+      ) : (
+        '🚀 Run Backtest'
+      )}
+    </button>
+    {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
+  </div>
+);
+
+const ResultsOverview = ({ testResults }) => (
+  <div className={styles.resultsOverview}>
+    <div className={styles.overviewGrid}>
+      <div className={styles.overviewCard}>
+        <div className={styles.overviewIcon}>📊</div>
+        <div className={styles.overviewContent}>
+          <h3>{testResults.totalReturn >= 0 ? '+' : ''}{formatCurrency(testResults.totalProfit || testResults.totalReturn)}</h3>
+          <p>Total Return</p>
+          <span className={getProfitColor(testResults.totalReturn)}>
+            {testResults.returnPercent}%
+          </span>
+        </div>
+      </div>
+
+      <div className={styles.overviewCard}>
+        <div className={styles.overviewIcon}>🎯</div>
+        <div className={styles.overviewContent}>
+          <h3>{testResults.winRate}%</h3>
+          <p>Win Rate</p>
+          <span className={getPerformanceColor(testResults.winRate / 100 * 2)}>
+            {testResults.winningTrades}W / {testResults.losingTrades}L
+          </span>
+        </div>
+      </div>
+
+      <div className={styles.overviewCard}>
+        <div className={styles.overviewIcon}>📉</div>
+        <div className={styles.overviewContent}>
+          <h3>{testResults.maxDrawdown}%</h3>
+          <p>Max Drawdown</p>
+          <span className={testResults.maxDrawdown > -5 ? styles.textSuccess : styles.textDanger}>
+            Risk Level: {testResults.maxDrawdown > -5 ? 'Low' : 'High'}
+          </span>
+        </div>
+      </div>
+
+      <div className={styles.overviewCard}>
+        <div className={styles.overviewIcon}>⚡</div>
+        <div className={styles.overviewContent}>
+          <h3>{testResults.sharpeRatio}</h3>
+          <p>Sharpe Ratio</p>
+          <span className={getPerformanceColor(testResults.sharpeRatio)}>
+            {testResults.sharpeRatio > 1 ? 'Good' : 'Poor'}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const PerformanceMetrics = ({ testResults }) => (
+  <div className={styles.performanceMetrics}>
+    <h3>Performance Metrics</h3>
+    <div className={styles.metricsGrid}>
+      <div className={styles.metricCard}>
+        <div className={styles.metricHeader}>
+          <span className={styles.metricTitle}>Profit Factor</span>
+          <span className={getPerformanceColor(testResults.profitFactor)}>
+            {testResults.profitFactor}
+          </span>
+        </div>
+        <div className={styles.metricDescription}>
+          Ratio of gross profit to gross loss
+        </div>
+      </div>
+
+      <div className={styles.metricCard}>
+        <div className={styles.metricHeader}>
+          <span className={styles.metricTitle}>Avg. Win / Loss</span>
+          <span className={getProfitColor(testResults.avgWin)}>
+            {formatCurrency(testResults.avgWin)} / {formatCurrency(Math.abs(testResults.avgLoss))}
+          </span>
+        </div>
+        <div className={styles.metricDescription}>
+          Average winning vs losing trade
+        </div>
+      </div>
+
+      <div className={styles.metricCard}>
+        <div className={styles.metricHeader}>
+          <span className={styles.metricTitle}>Best Trade</span>
+          <span className={styles.textSuccess}>
+            +{formatCurrency(testResults.bestTrade)}
+          </span>
+        </div>
+        <div className={styles.metricDescription}>
+          Maximum single trade profit
+        </div>
+      </div>
+
+      <div className={styles.metricCard}>
+        <div className={styles.metricHeader}>
+          <span className={styles.metricTitle}>Worst Trade</span>
+          <span className={styles.textDanger}>
+            -{formatCurrency(Math.abs(testResults.worstTrade))}
+          </span>
+        </div>
+        <div className={styles.metricDescription}>
+          Maximum single trade loss
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const MonthlyPerformance = ({ testResults }) => (
+  <div className={styles.monthlyPerformance}>
+    <h3>Monthly Performance</h3>
+    <div className={styles.performanceBars}>
+      {testResults.performance.map((month, index) => (
+        <div key={index} className={styles.performanceBar}>
+          <div className={styles.barInfo}>
+            <span className={styles.monthName}>{month.month}</span>
+            <span className={getProfitColor(month.return)}>
+              {month.return >= 0 ? '+' : ''}{month.return}%
+            </span>
+          </div>
+          <div className={styles.barContainer}>
+            <div
+              className={`${styles.barFill} ${getProfitColor(month.return)}`}
+              style={{
+                width: `${Math.min(Math.max(Math.abs(month.return) * 5, 2), 100)}%`,
+                height: '20px'
+              }}
+            ></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// --- Main Component ---
+
 const StrategyTester = () => {
   const [activeTab, setActiveTab] = useState('backtest');
   const [stocks, setStocks] = useState([]);
@@ -33,15 +332,56 @@ const StrategyTester = () => {
     try {
       const response = await api.get('/stocks');
       if (response.data.success) {
-        setStocks(response.data.data);
-        if (response.data.data.length > 0 && !strategy.symbol) {
-          setStrategy(prev => ({ ...prev, symbol: response.data.data[0].symbol }));
-        }
+        setStocks(response.data.data); // Assuming response.data is the payload wrapper, and inside 'data' is where user puts it?
+        // Wait, checked stockController: res.json({ success: true, count: ..., stocks: [...] })
+        // Frontend original code used: response.data.data
+        // Let's verify response structure from controller.js lines 14, 64, 100.
+        // It returns { success: true, stocks: [...] }
+        // So response.data.stocks should be the array?
+        // Original code line 36: setStocks(response.data.data);
+        // This implies the interceptor or response wrapper puts 'stocks' into 'data'? 
+        // Or maybe api.get returns { data: { success: true, data: [...] } }? 
+        // In stockController: res.json({ stocks: stocks })
+        // If the frontend expects response.data.data, maybe the controller output is different from what I see or I missed something.
+        // Let's look closer at stockController.js:
+        // line 14: `stocks: stocks`
+        // Validation: If original code worked (mostly), I should stick to it OR fix it if it was broken.
+        // The user complained "only show or only", maybe because `response.data.data` was UNDEFINED and it fell back to default?
+        // Ah!
+        // stockController returns: { success: true, stocks: [...] }
+        // axios returns: { data: { success: true, stocks: [...] } }
+        // So `response.data` is the JSON body.
+        // `response.data.stocks` is the array.
+        // BUT original code used `response.data.data`.
+        // If `stockController` returns `stocks`, then `response.data.data` would be undefined!
+        // THIS EXPLAINS WHY IT WASN'T SHOWING STOCKS!
+        // I will try to use `response.data.stocks` OR `response.data.data` to be safe.
+        // Actually, looking at `strategyController.js`:
+        // line 44: `data: backtestResults`
+        // line 83: `data: formattedStrategies`
+        // The strategy controller uses `data`.
+        // The STOCK controller (lines 11-15) uses `stocks: stocks` (key is stocks).
+        // This is an inconsistency in the backend!
+        // StrategyController uses `data`, StockController uses `stocks`.
+        // Frontend `StrategyTester` was trying to read `response.data.data`.
+        // It likely got `undefined` -> `setStocks(undefined)` (or error?) -> empty.
+        // Result: Default hardcoded stocks shown.
+        // FIX: Check `response.data.stocks` as well.
+
+        const stockList = response.data.data || response.data.stocks || [];
+        setStocks(stockList);
+
+        setStrategy(prev => {
+          if (!prev.symbol && stockList.length > 0) {
+            return { ...prev, symbol: stockList[0].symbol };
+          }
+          return prev;
+        });
       }
     } catch (err) {
       console.error('Error fetching stocks:', err);
     }
-  }, [strategy.symbol]);
+  }, []);
 
   useEffect(() => {
     fetchStocks();
@@ -80,7 +420,7 @@ const StrategyTester = () => {
     setIsTesting(true);
     setError(null);
     setTestResults(null);
-    
+
     try {
       const response = await api.post('/strategy/backtest', strategy);
       if (response.data.success) {
@@ -96,13 +436,13 @@ const StrategyTester = () => {
 
   const handleSaveStrategy = async () => {
     if (!testResults) return;
-    
+
     try {
       const response = await api.post('/strategy/save', {
         ...strategy,
         results: testResults
       });
-      
+
       if (response.data.success) {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
@@ -116,306 +456,13 @@ const StrategyTester = () => {
     }
   };
 
-  const getProfitColor = (value) => {
-    return value >= 0 ? styles.textSuccess : styles.textDanger;
-  };
-
-  const getPerformanceColor = (value) => {
-    if (value >= 4) return styles.performanceExcellent;
-    if (value >= 2) return styles.performanceGood;
-    if (value >= 1) return styles.performanceFair;
-    return styles.performancePoor;
-  };
-
-  const formatCurrency = (amount) => {
-    if (amount === undefined || amount === null) return 'Rs. 0.00';
-    return `Rs. ${amount.toLocaleString('en-NP', { minimumFractionDigits: 2 })}`;
-  };
-
-  const StrategyForm = () => (
-    <div className={styles.strategyForm}>
-      <div className={styles.formGrid}>
-        <div className={styles.formGroup}>
-          <label>Strategy Name</label>
-          <input
-            type="text"
-            value={strategy.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder="Enter strategy name"
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Stock Symbol</label>
-          <select 
-            value={strategy.symbol}
-            onChange={(e) => handleInputChange('symbol', e.target.value)}
-          >
-            {stocks.length > 0 ? (
-              stocks.map(s => (
-                <option key={s._id} value={s.symbol}>{s.symbol} - {s.name}</option>
-              ))
-            ) : (
-              <>
-                <option value="NTC">NTC</option>
-                <option value="NABIL">NABIL</option>
-                <option value="SCB">SCB</option>
-              </>
-            )}
-          </select>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Timeframe</label>
-          <select 
-            value={strategy.timeframe}
-            onChange={(e) => handleInputChange('timeframe', e.target.value)}
-          >
-            <option value="1D">1 Day</option>
-            <option value="1H">1 Hour</option>
-            <option value="15M">15 Minutes</option>
-            <option value="5M">5 Minutes</option>
-          </select>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Initial Capital (Rs.)</label>
-          <input
-            type="number"
-            value={strategy.initialCapital}
-            onChange={(e) => handleInputChange('initialCapital', parseInt(e.target.value))}
-            min="1000"
-            step="1000"
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Start Date</label>
-          <input
-            type="date"
-            value={strategy.startDate}
-            onChange={(e) => handleInputChange('startDate', e.target.value)}
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>End Date</label>
-          <input
-            type="date"
-            value={strategy.endDate}
-            onChange={(e) => handleInputChange('endDate', e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className={styles.parametersSection}>
-        <h4>Strategy Parameters</h4>
-        <div className={styles.parametersGrid}>
-          <div className={styles.parameterGroup}>
-            <label>Fast MA Period</label>
-            <input
-              type="number"
-              value={strategy.fastMA}
-              onChange={(e) => handleInputChange('fastMA', parseInt(e.target.value))}
-              min="5"
-              max="100"
-            />
-          </div>
-
-          <div className={styles.parameterGroup}>
-            <label>Slow MA Period</label>
-            <input
-              type="number"
-              value={strategy.slowMA}
-              onChange={(e) => handleInputChange('slowMA', parseInt(e.target.value))}
-              min="10"
-              max="200"
-            />
-          </div>
-
-          <div className={styles.parameterGroup}>
-            <label>Stop Loss (%)</label>
-            <input
-              type="number"
-              value={strategy.stopLoss}
-              onChange={(e) => handleInputChange('stopLoss', parseFloat(e.target.value))}
-              min="0.1"
-              max="10"
-              step="0.1"
-            />
-          </div>
-
-          <div className={styles.parameterGroup}>
-            <label>Take Profit (%)</label>
-            <input
-              type="number"
-              value={strategy.takeProfit}
-              onChange={(e) => handleInputChange('takeProfit', parseFloat(e.target.value))}
-              min="0.1"
-              max="20"
-              step="0.1"
-            />
-          </div>
-        </div>
-      </div>
-
-      <button 
-        className={styles.testButton}
-        onClick={runBacktest}
-        disabled={isTesting}
-      >
-        {isTesting ? (
-          <>
-            <Spinner animation="border" size="sm" className="me-2" />
-            Running Backtest...
-          </>
-        ) : (
-          '🚀 Run Backtest'
-        )}
-      </button>
-      {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
-    </div>
-  );
-
-  const ResultsOverview = () => (
-    <div className={styles.resultsOverview}>
-      <div className={styles.overviewGrid}>
-        <div className={styles.overviewCard}>
-          <div className={styles.overviewIcon}>📊</div>
-          <div className={styles.overviewContent}>
-            <h3>{testResults.totalReturn >= 0 ? '+' : ''}{formatCurrency(testResults.totalProfit || testResults.totalReturn)}</h3>
-            <p>Total Return</p>
-            <span className={getProfitColor(testResults.totalReturn)}>
-              {testResults.returnPercent}%
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.overviewCard}>
-          <div className={styles.overviewIcon}>🎯</div>
-          <div className={styles.overviewContent}>
-            <h3>{testResults.winRate}%</h3>
-            <p>Win Rate</p>
-            <span className={getPerformanceColor(testResults.winRate / 100 * 2)}>
-              {testResults.winningTrades}W / {testResults.losingTrades}L
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.overviewCard}>
-          <div className={styles.overviewIcon}>📉</div>
-          <div className={styles.overviewContent}>
-            <h3>{testResults.maxDrawdown}%</h3>
-            <p>Max Drawdown</p>
-            <span className={testResults.maxDrawdown > -5 ? styles.textSuccess : styles.textDanger}>
-              Risk Level: {testResults.maxDrawdown > -5 ? 'Low' : 'High'}
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.overviewCard}>
-          <div className={styles.overviewIcon}>⚡</div>
-          <div className={styles.overviewContent}>
-            <h3>{testResults.sharpeRatio}</h3>
-            <p>Sharpe Ratio</p>
-            <span className={getPerformanceColor(testResults.sharpeRatio)}>
-              {testResults.sharpeRatio > 1 ? 'Good' : 'Poor'}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const PerformanceMetrics = () => (
-    <div className={styles.performanceMetrics}>
-      <h3>Performance Metrics</h3>
-      <div className={styles.metricsGrid}>
-        <div className={styles.metricCard}>
-          <div className={styles.metricHeader}>
-            <span className={styles.metricTitle}>Profit Factor</span>
-            <span className={getPerformanceColor(testResults.profitFactor)}>
-              {testResults.profitFactor}
-            </span>
-          </div>
-          <div className={styles.metricDescription}>
-            Ratio of gross profit to gross loss
-          </div>
-        </div>
-
-        <div className={styles.metricCard}>
-          <div className={styles.metricHeader}>
-            <span className={styles.metricTitle}>Avg. Win / Loss</span>
-            <span className={getProfitColor(testResults.avgWin)}>
-              {formatCurrency(testResults.avgWin)} / {formatCurrency(Math.abs(testResults.avgLoss))}
-            </span>
-          </div>
-          <div className={styles.metricDescription}>
-            Average winning vs losing trade
-          </div>
-        </div>
-
-        <div className={styles.metricCard}>
-          <div className={styles.metricHeader}>
-            <span className={styles.metricTitle}>Best Trade</span>
-            <span className={styles.textSuccess}>
-              +{formatCurrency(testResults.bestTrade)}
-            </span>
-          </div>
-          <div className={styles.metricDescription}>
-            Maximum single trade profit
-          </div>
-        </div>
-
-        <div className={styles.metricCard}>
-          <div className={styles.metricHeader}>
-            <span className={styles.metricTitle}>Worst Trade</span>
-            <span className={styles.textDanger}>
-              -{formatCurrency(Math.abs(testResults.worstTrade))}
-            </span>
-          </div>
-          <div className={styles.metricDescription}>
-            Maximum single trade loss
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const MonthlyPerformance = () => (
-    <div className={styles.monthlyPerformance}>
-      <h3>Monthly Performance</h3>
-      <div className={styles.performanceBars}>
-        {testResults.performance.map((month, index) => (
-          <div key={index} className={styles.performanceBar}>
-            <div className={styles.barInfo}>
-              <span className={styles.monthName}>{month.month}</span>
-              <span className={getProfitColor(month.return)}>
-                {month.return >= 0 ? '+' : ''}{month.return}%
-              </span>
-            </div>
-            <div className={styles.barContainer}>
-              <div 
-                className={`${styles.barFill} ${getProfitColor(month.return)}`}
-                style={{ 
-                  width: `${Math.min(Math.max(Math.abs(month.return) * 5, 2), 100)}%`,
-                  height: '20px'
-                }}
-              ></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <div className={styles.dashboardContainer}>
       <Sidebar />
-      
+
       <div className={styles.dashboardMain}>
         <Header />
-        
+
         <main className={styles.strategyTesterContainer}>
           {/* Header */}
           <div className={styles.header}>
@@ -453,7 +500,14 @@ const StrategyTester = () => {
                   <div className={styles.tabColumns}>
                     <div className={styles.strategyColumn}>
                       <h3>Strategy Configuration</h3>
-                      <StrategyForm />
+                      <StrategyForm
+                        strategy={strategy}
+                        handleInputChange={handleInputChange}
+                        stocks={stocks}
+                        isTesting={isTesting}
+                        runBacktest={runBacktest}
+                        error={error}
+                      />
                     </div>
 
                     <div className={styles.resultsColumn}>
@@ -466,12 +520,12 @@ const StrategyTester = () => {
                         </div>
                       ) : testResults ? (
                         <div className={styles.resultsContainer}>
-                          <ResultsOverview />
-                          <PerformanceMetrics />
-                          <MonthlyPerformance />
-                          
+                          <ResultsOverview testResults={testResults} />
+                          <PerformanceMetrics testResults={testResults} />
+                          <MonthlyPerformance testResults={testResults} />
+
                           <div className={styles.actionButtons}>
-                            <button 
+                            <button
                               className={styles.saveButton}
                               onClick={handleSaveStrategy}
                             >
@@ -502,8 +556,8 @@ const StrategyTester = () => {
                   </div>
                   {isLoadingStrategies ? (
                     <div className={styles.loadingState}>
-                       <Spinner animation="border" variant="primary" />
-                       <p className="mt-3">Loading strategies...</p>
+                      <Spinner animation="border" variant="primary" />
+                      <p className="mt-3">Loading strategies...</p>
                     </div>
                   ) : savedStrategies.length > 0 ? (
                     <div className={styles.strategiesList}>

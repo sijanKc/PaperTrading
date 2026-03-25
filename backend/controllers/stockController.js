@@ -11,7 +11,7 @@ const getAllStocks = async (req, res) => {
     res.json({
       success: true,
       count: stocks.length,
-      stocks: stocks
+      data: stocks
     });
   } catch (error) {
     console.error('Get stocks error:', error);

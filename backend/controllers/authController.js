@@ -50,7 +50,6 @@ const register = async (req, res) => {
       username,
       password: hashedPassword,
       agreements: { confirmInfo, confirmPaperTrading },
-      agreements: { confirmInfo, confirmPaperTrading },
       isVerified: true, // Auto-verify email to skip to admin approval
       approved: false  // Default to false, requires admin approval
     });

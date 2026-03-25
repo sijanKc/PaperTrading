@@ -44,5 +44,8 @@ const portfolioSchema = new mongoose.Schema({
 
 // Create compound index for faster queries
 portfolioSchema.index({ userId: 1, stockId: 1, competitionId: 1 }, { unique: true });
+// Additional indexes for common queries
+portfolioSchema.index({ userId: 1, competitionId: 1 });
+portfolioSchema.index({ symbol: 1 });
 
 module.exports = mongoose.model('Portfolio', portfolioSchema);

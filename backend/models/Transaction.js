@@ -65,4 +65,10 @@ const transactionSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Indexes for common queries
+transactionSchema.index({ userId: 1, createdAt: -1 });
+transactionSchema.index({ userId: 1, type: 1, createdAt: -1 });
+transactionSchema.index({ userId: 1, competitionId: 1, createdAt: -1 });
+transactionSchema.index({ symbol: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Transaction', transactionSchema);

@@ -15,6 +15,7 @@
     "bootstrap": "^5.3.3",
     "chart.js": "^4.5.0",
     "framer-motion": "^12.23.19",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.544.0",
     "nepali-date-converter": "^3.4.0",
     "react": "^19.1.1",
