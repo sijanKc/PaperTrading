@@ -72,15 +72,7 @@ class TechnicalAnalysis {
         return Number((100 - (100 / (1 + rs))).toFixed(2));
     }
     /**
-     * ALGORITHM: Bounded Knapsack (Dynamic Programming)
-     * PURPOSE: Optimize stock portfolio while respecting per-stock investment limits.
-     * 
-     * WHY THIS ALGORITHM?
-     * It extends the Unbounded Knapsack by adding a 'count' constraint (maxQty).
-     * This ensures the portfolio is diversified and doesn't exceed 
-     * business rules like "Max Rs. 10,000 per stock".
-     * 
-     * Complexity: O(W * N * maxQty)
+     * ALGORITHM: Bounded Knapsack (Dynamic Programming)to 
      */
     static solveKnapsack(budget, stocks, perStockLimit = 10000) {
         if (!stocks || stocks.length === 0 || budget <= 0) return { recommendedPortfolio: [], optimizedReturnScore: 0, budgetUsed: 0 };

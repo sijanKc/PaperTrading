@@ -1,7 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const dns = require('dns');
 require('dotenv').config();
+
+// Fix for local DNS issues causing MongoDB connection failure
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 
 const app = express();
 
